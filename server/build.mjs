@@ -1,0 +1,2 @@
+import fs from 'node:fs';
+const seed=JSON.parse(fs.readFileSync('server/definitions.json','utf8')),assets={};for(const file of fs.readdirSync('web')){if(!/\.(html|js|css)$/.test(file))continue;assets['/'+file]={body:fs.readFileSync('web/'+file,'utf8'),type:file.endsWith('.js')?'text/javascript; charset=utf-8':file.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8'}}fs.writeFileSync('worker/generated.js','export const seed='+JSON.stringify(seed)+';\nexport const assets='+JSON.stringify(assets)+';');

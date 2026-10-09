@@ -1,0 +1,1 @@
+export function db(env){if(!env.DB)throw new Error('قاعدة البيانات غير متاحة');return {query(sql,...params){return env.DB.prepare(sql).bind(...params)},batch(statements){return env.DB.batch(statements)}}}

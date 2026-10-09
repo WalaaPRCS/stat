@@ -1,0 +1,16 @@
+services:
+  statistics:
+    build: .
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATA_DIR: /app/storage
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN to your HTTPS domain}
+      SETUP_KEY: ${SETUP_KEY:?Set a random setup key before first deployment}
+    volumes:
+      - statistics_data:/app/storage
+volumes:
+  statistics_data:

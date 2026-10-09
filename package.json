@@ -1,0 +1,1 @@
+{"name":"prcs-gaza-statistics","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node server/build.mjs","start":"node server/index.mjs","test":"node server/test.mjs"},"engines":{"node":">=24"}}

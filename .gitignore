@@ -1,0 +1,7 @@
+node_modules/
+worker/generated.js
+storage/
+.env
+*.sqlite*
+*.db*
+backups/
