@@ -2,7 +2,26 @@
 const DBState={config:null,records:[],issues:[],snapshots:[],hospital:'الكل',from:'',to:'',page:1,size:25,search:'',loading:true,edit:null};
 const oldRender=render;nav.splice(6,0,['hospital-records','سجل إحصائيات المستشفيات','reports']);nav.splice(7,0,['import-review','مراجعة الاستيراد','entry']);
 const num=n=>n==null?'—':Number(n).toLocaleString('en-US');
-async function api(path,body){const res=await fetch('/api/'+path,body?{method:'POST',headers:{'Content-Type':'application/json','X-PRCS-Action':'1'},body:JSON.stringify(body)}:{});const data=await res.json();if(!res.ok)throw new Error(data.error||'تعذر تحميل البيانات');if(body&&['records','ems-records','phc-records','phc-clinics'].includes(path)){HEALTH_NUMBERS.data=null;HEALTH_NUMBERS.time=0}return data}
+async function api(path,body){
+ const attempts=body?1:3;
+ for(let attempt=0;attempt<attempts;attempt++){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+  let retry=false;
+  try{
+   const res=await fetch('/api/'+path,{signal:controller.signal,cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json','X-PRCS-Action':'1'},body:JSON.stringify(body)}:{})});
+   if(!body&&[408,429,502,503,504].includes(res.status)){retry=true;throw new Error('تعذر الاتصال بالخادم مؤقتًا')}
+   const data=await res.json();
+   if(!res.ok)throw new Error(data.error||'تعذر تحميل البيانات');
+   if(body&&['records','ems-records','phc-records','phc-clinics','archive-import'].includes(path)){HEALTH_NUMBERS.data=null;HEALTH_NUMBERS.time=0}
+   return data;
+  }catch(e){
+   const connection=e.name==='TypeError'||e.name==='AbortError';
+   if(!body&&(retry||connection)&&attempt+1<attempts){clearTimeout(timer);await new Promise(resolve=>setTimeout(resolve,600*(attempt+1)));continue}
+   if(connection)throw new Error(body?'تعذر تأكيد تنفيذ الطلب. تحقق من السجل قبل إعادة الإرسال.':'تعذر الاتصال بالخادم. تحقق من الاتصال ثم أعد المحاولة.');
+   throw e;
+  }finally{clearTimeout(timer)}
+ }
+}
 function hospitalName(id){return DBState.config?.hospitals.find(h=>h.id===id)?.name||id}
 function selectedRecords(){return DBState.records.filter(r=>(DBState.hospital==='الكل'||r.hospital_id===DBState.hospital)&&(!DBState.from||r.date>=DBState.from)&&(!DBState.to||r.date<=DBState.to)&&(!DBState.search||hospitalName(r.hospital_id).includes(DBState.search)||r.date.includes(DBState.search)))}
 function aggregate(list){const totals={};for(const r of list)for(const [k,v] of Object.entries(r.values))if(v!=null&&typeof v==='number')totals[k]=(totals[k]||0)+v;return totals}
