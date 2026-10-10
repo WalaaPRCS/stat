@@ -45,9 +45,34 @@ function reviewPage(){main.innerHTML=`<div class="page-head"><div><h1>مراجع
 render=function(){const hash=location.hash.slice(1)||'home';if(DBState.loading){main.innerHTML='<div class="db-loading"><h2>تحميل إحصائيات المستشفيات</h2><p id="import-progress">الاتصال بقاعدة البيانات…</p></div>';return}const needsDetails=['health','entry','hospital-records','reports','hospital','import-review','statistics'].includes(hash)||hash.startsWith('hospital/');if(needsDetails&&!DBState.detailsReady){main.innerHTML=`<section class="panel empty"><h2>تحميل التفاصيل</h2><p>${DBState.detailsError?esc(DBState.detailsError):'جارٍ تحميل سجلات المستشفيات…'}</p>${DBState.detailsError?'<button id="details-retry" class="btn">إعادة المحاولة</button>':''}</section>`;if(DBState.detailsError)document.getElementById('details-retry').onclick=()=>{DBState.detailsError='';loadHospitalDetails()};else loadHospitalDetails();return}if(hash==='import-review'&&!DBState.reviewReady&&!DBState.reviewBusy){DBState.reviewBusy=true;Promise.all([api('issues'),api('snapshots')]).then(([issues,snapshots])=>{DBState.issues=issues;DBState.snapshots=snapshots;DBState.reviewReady=true;render()}).catch(e=>toast(e.message)).finally(()=>{DBState.reviewBusy=false})}oldRender();route=hash;document.querySelector('#nav').innerHTML=nav.map(([id,l,ic])=>`<a href="#${id}" class="${route===id||(route.startsWith('hospital/')&&id==='health')?'active':''}">${icon(ic)}${l}</a>`).join('');if(hash==='home')realHome();else if(hash==='health')realHealth();else if(hash==='entry')realEntry();else if(hash==='hospital-records'||hash==='reports')recordsPage();else if(hash==='import-review')reviewPage();else if(hash==='hospital'||hash.startsWith('hospital/'))realHospital(hash.split('/')[1]);if(['disaster','community','services'].includes(hash)){main.insertAdjacentHTML('afterbegin','<div class="db-banner warn">هذه الصفحة نموذج توضيحي؛ بياناتها لم تُربط بعد بقاعدة البيانات.</div>')}document.querySelector('#breadcrumb').textContent='الرئيسية'+(hash==='home'?'':' / '+(nav.find(n=>n[0]===hash)?.[1]||'إحصائيات المستشفى'));document.body.classList.remove('menu-open')};
 async function bootDB(){DBState.loading=true;DBState.detailsReady=false;DBState.detailsError='';render();try{
  const [config,summary]=await Promise.all([api('config'),api('health-summary')]);DBState.config=config;HEALTH_NUMBERS.data=summary;HEALTH_NUMBERS.time=Date.now();HEALTH_NUMBERS.error=false;
- DBState.loading=false;render();
+ DBState.loading=false;render();setTimeout(preloadStatistics,150);
  }catch(e){main.innerHTML=`<div class="panel empty"><h3>تعذر تحميل البيانات</h3><p>${esc(e.message)}</p><button id="db-retry" class="btn primary">إعادة المحاولة</button></div>`;document.getElementById('db-retry').onclick=bootDB}}
 async function loadHospitalDetails(){if(DBState.detailsBusy)return;DBState.detailsBusy=true;try{DBState.records=await api('records');DBState.detailsReady=true;DBState.detailsError=''}catch(e){DBState.detailsError=e.message}finally{DBState.detailsBusy=false;render()}}
+
+let statisticsPreloadBusy=false;
+async function preloadStatistics(){
+ if(statisticsPreloadBusy)return;
+ statisticsPreloadBusy=true;
+ try{
+  await Promise.allSettled([
+   DBState.detailsReady?Promise.resolve():loadHospitalDetails(),
+   warmStatistics(PHC,'phc-report',()=>location.hash.startsWith('#phc')),
+   warmStatistics(EMS,'ems-report',()=>['#ems','#ems-entry'].includes(location.hash)),
+   DBState.reviewReady?Promise.resolve():warmReview()
+  ]);
+ }finally{statisticsPreloadBusy=false}
+}
+async function warmStatistics(state,endpoint,visible){
+ if(state.data||state.busy)return;
+ state.busy=true;
+ try{state.data=await api(endpoint);state.error=''}catch{state.error=''}
+ finally{state.busy=false;if(visible())render()}
+}
+async function warmReview(){
+ if(DBState.reviewBusy)return;DBState.reviewBusy=true;
+ try{const [issues,snapshots]=await Promise.all([api('issues'),api('snapshots')]);DBState.issues=issues;DBState.snapshots=snapshots;DBState.reviewReady=true}
+ catch{}finally{DBState.reviewBusy=false;if(location.hash==='#import-review')render()}
+}
 
 bootDB();
 function beneficiaryTable(){const s=DBState.snapshots.find(s=>s.kind==='beneficiary_details');if(!s)return '';return '<section class="panel section-gap"><div class="panel-head"><h2>تفاصيل المستفيدين — مستشفى الأمل</h2><small>الورقة الإضافية؛ لا تُجمع مع إحصائيات الخدمات</small></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th>'+s.values.labels.map(l=>'<th>'+esc(l)+'</th>').join('')+'</tr></thead><tbody>'+s.values.entries.map(r=>'<tr><td>'+r.date+'</td>'+r.values.map(v=>'<td>'+num(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div></section>'}
