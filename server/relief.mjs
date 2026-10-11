@@ -16,7 +16,7 @@ if(!sql.prepare("SELECT id FROM disaster_constants WHERE type='item' LIMIT 1").g
 sql.prepare("INSERT INTO disaster_constants_meta VALUES('seeded')").run();}
 // Convert existing text values once while preserving operation identities and numbers.
 for(const r of sql.prepare('SELECT id,payload FROM relief_operations').all()){const b=JSON.parse(r.payload);if(b.siteId)continue;b.siteTypeId=add('siteType',b.siteType);b.siteId=add('site',b.site,{region:b.region,siteTypeId:b.siteTypeId});b.projectId=b.project?add('project',b.project):'';b.partnerId=b.partner?add('partner',b.partner):'';sql.prepare('UPDATE relief_operations SET payload=? WHERE id=?').run(JSON.stringify(b),r.id)}
-sql.exec('CREATE TABLE IF NOT EXISTS relief_summaries(id TEXT PRIMARY KEY,payload TEXT NOT NULL)');
+sql.exec('CREATE TABLE IF NOT EXISTS relief_summaries(id TEXT PRIMARY KEY,payload TEXT NOT NULL);CREATE TABLE IF NOT EXISTS kitchen_summaries(id TEXT PRIMARY KEY,payload TEXT NOT NULL)');
 sql.exec('CREATE TABLE IF NOT EXISTS kitchen_operations(id TEXT PRIMARY KEY,date TEXT NOT NULL,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL)');
 const settings=()=>Object.fromEntries(['kitchen','project','partner','unit','category','siteType','site','item'].map(t=>[t,rows(t)]));
 const catalog=()=>rows('item').map(c=>({...c,unit:rows('unit').find(u=>u.id===c.unitId)?.name,category:rows('category').find(u=>u.id===c.categoryId)?.name,fractional:!!rows('unit').find(u=>u.id===c.unitId)?.fractional}));
@@ -25,8 +25,9 @@ return async(req,u)=>{
 if(new URL(req.url).pathname==='/api/disaster-import'){
 if(u?.role!=='admin')return out({error:'الاستيراد لمدير النظام فقط'},403);if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
 let b;try{b=await req.json()}catch{return out({error:'ملف غير صالح'},400)}
-if(!['settings','relief'].includes(b.section)||b.data?.format!=='prcs-disaster-import-v1')return out({error:'اختر ملف استيراد الكوارث المُجهّز'},400);
-const input=b.data,constants=input.settings||{},records=b.section==='relief'?input.records||[]:[];
+if(!['settings','relief','kitchens'].includes(b.section)||b.data?.format!=='prcs-disaster-import-v1')return out({error:'اختر ملف استيراد الكوارث المُجهّز'},400);
+if(b.section==='kitchens'&&b.data.service!=='kitchens'||b.section==='relief'&&b.data.service==='kitchens')return out({error:'الملف لا يخص الخدمة المختارة'},400);
+const input=b.data,constants=input.settings||{},summaryTable=b.section==='kitchens'?'kitchen_summaries':'relief_summaries',records=b.section!=='settings'?input.records||[]:[];
 if(!Array.isArray(records)||records.length>10000)return out({error:'عدد السجلات غير صالح'},400);
 const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
 let addedConstants=0,added=0,skipped=0;sql.exec('BEGIN IMMEDIATE');try{
@@ -38,9 +39,9 @@ for(const x of constants.item||[])ensure('item',x.name,{unitId:ensure('unit',x.u
 for(const r of records){if(!validDate(r.date)||!validDate(r.period_end)||r.date>r.period_end||r.period_end>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'})||!['monthly','historical'].includes(r.kind)||!['شمال غزة','غزة','الوسطى','خانيونس','رفح','غير محددة'].includes(r.region)||typeof r.bucket!=='string'||!r.bucket||r.bucket.length>200||!Array.isArray(r.items)||r.items.length>100||typeof r.source!=='string'||r.source.length>200)throw Error('فترة أو بيانات ملخص غير صالحة');
 for(const k of ['families','people'])if(r[k]!==null&&(!Number.isFinite(r[k])||r[k]<0||r[k]>1e10))throw Error('عدد مستفيدين غير صالح');
 const items=r.items.map(x=>{if(!Number.isFinite(x.quantity)||x.quantity<0||x.quantity>1e10)throw Error('كمية غير صالحة');const itemId=ensure('item',x.name,{unitId:ensure('unit',x.unit,{fractional:x.fractional===true}),categoryId:ensure('category',x.category)});return {itemId,quantity:x.quantity}});if(new Set(items.map(x=>x.itemId)).size!==items.length)throw Error('صنف مكرر في الملخص');
-const id='archive-'+createHash('sha256').update([r.source,r.date,r.period_end,r.bucket].join('|')).digest('hex').slice(0,32),payload={date:r.date,period_end:r.period_end,kind:r.kind,region:r.region,bucket:r.bucket,site:r.bucket,siteType:r.siteType||'ملخص أرشيفي',project:'',partner:'',reference:'',notes:'ملخص أرشيفي؛ أعداد المستفيدين قد تكون تقديرية وتشمل التكرار. لا يمثل عملية توزيع منفردة.',families:r.families,people:r.people,estimated:true,items,source:r.source};
-const old=sql.prepare('SELECT payload FROM relief_summaries WHERE id=?').get(id);if(old){if(old.payload!==JSON.stringify(payload))throw Error('ملخص مستورد سابقًا بمحتوى مختلف؛ لم يتم استبداله');skipped++;continue}
-const overlapping=sql.prepare('SELECT payload FROM relief_summaries').all().some(x=>{const p=JSON.parse(x.payload);return p.bucket===r.bucket&&p.date<=r.period_end&&p.period_end>=r.date});if(overlapping)throw Error('فترات الأرشيف متداخلة لنفس المجموعة');sql.prepare('INSERT INTO relief_summaries VALUES(?,?)').run(id,JSON.stringify(payload));added++;
+const id='archive-'+createHash('sha256').update([r.source,r.date,r.period_end,r.bucket].join('|')).digest('hex').slice(0,32),payload={date:r.date,period_end:r.period_end,kind:r.kind,region:r.region,bucket:r.bucket,site:r.bucket,siteType:r.siteType||'ملخص أرشيفي',project:'',partner:'',reference:'',notes:b.section==='kitchens'?'ملخص أرشيفي للتكيات حسب المحافظة؛ لا تتوفر أسماء التكيات أو أعداد المستفيدين.':'ملخص أرشيفي؛ أعداد المستفيدين قد تكون تقديرية وتشمل التكرار. لا يمثل عملية توزيع منفردة.',families:r.families,people:r.people,estimated:true,items,source:r.source};
+const old=sql.prepare('SELECT payload FROM '+summaryTable+' WHERE id=?').get(id);if(old){if(old.payload!==JSON.stringify(payload))throw Error('ملخص مستورد سابقًا بمحتوى مختلف؛ لم يتم استبداله');skipped++;continue}
+const overlapping=sql.prepare('SELECT payload FROM '+summaryTable).all().some(x=>{const p=JSON.parse(x.payload);return p.bucket===r.bucket&&p.date<=r.period_end&&p.period_end>=r.date});if(overlapping)throw Error('فترات الأرشيف متداخلة لنفس المجموعة');sql.prepare('INSERT INTO '+summaryTable+' VALUES(?,?)').run(id,JSON.stringify(payload));added++;
 }
 sql.exec('COMMIT');return out({addedConstants,added,skipped});
 }catch(e){sql.exec('ROLLBACK');return out({error:e.message||'تعذر الاستيراد؛ لم يتم حفظ أي تغييرات'},400)}
@@ -52,7 +53,7 @@ if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
 let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
 const types=['kitchen','project','partner','unit','category','siteType','site','item'];if(!types.includes(b.type))return out({error:'نوع ثابت غير صالح'},400);
 const old=b.id?sql.prepare('SELECT * FROM disaster_constants WHERE id=? AND type=?').get(b.id,b.type):null;if(b.id&&!old)return out({error:'الثابت غير موجود'},404);
-const used=id=>sql.prepare('SELECT payload FROM relief_operations UNION ALL SELECT payload FROM relief_summaries UNION ALL SELECT payload FROM kitchen_operations').all().some(r=>{const p=JSON.parse(r.payload);return [p.kitchenId,p.siteId,p.siteTypeId,p.projectId,p.partnerId].includes(id)||p.items.some(x=>x.itemId===id)})||sql.prepare('SELECT id,payload FROM disaster_constants WHERE id<>?').all(id).some(r=>Object.values(JSON.parse(r.payload)).includes(id));
+const used=id=>sql.prepare('SELECT payload FROM relief_operations UNION ALL SELECT payload FROM relief_summaries UNION ALL SELECT payload FROM kitchen_operations UNION ALL SELECT payload FROM kitchen_summaries').all().some(r=>{const p=JSON.parse(r.payload);return [p.kitchenId,p.siteId,p.siteTypeId,p.projectId,p.partnerId].includes(id)||p.items.some(x=>x.itemId===id)})||sql.prepare('SELECT id,payload FROM disaster_constants WHERE id<>?').all(id).some(r=>Object.values(JSON.parse(r.payload)).includes(id));
 if(b.action==='delete'){if(!old)return out({error:'اختر الثابت'},400);if(used(b.id))return out({error:'لا يمكن حذف ثابت مرتبط بعملية أو تعريف آخر'},409);sql.prepare('DELETE FROM disaster_constants WHERE id=?').run(b.id);return out({saved:true})}
 if(typeof b.name!=='string'||!normalize(b.name)||b.name.length>200)return out({error:'أدخل اسمًا صالحًا'},400);const data={};
 if(b.type==='item'){if(!rows('unit').some(x=>x.id===b.unitId)||!rows('category').some(x=>x.id===b.categoryId))return out({error:'اختر الوحدة والفئة'},400);Object.assign(data,{unitId:b.unitId,categoryId:b.categoryId});if(old&&used(old.id)&&JSON.parse(old.payload).unitId!==b.unitId)return out({error:'لا يمكن تغيير وحدة صنف مستخدم؛ أضف صنفًا جديدًا بوحدته'},409)}
