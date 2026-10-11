@@ -30,4 +30,12 @@ cookie='';assert.equal((await call('kitchen-operations')).data.records[0].people
 cookie=admin;assert.equal((await call('kitchen-operations',{id:savedKitchen.data.id,action:'delete'})).status,200);
 assert.equal((await call('disaster-settings',{type:'kitchen',id:kitchenBody.kitchenId,action:'delete'})).status,200);
 console.log('PASS kitchens: CRUD, public read access, scoped writes, duplicate protection and linked settings');
+cookie=admin;
+const importedItem=kitchenConfig.catalog.find(c=>c.category==='مواد التكيات');
+const kitchenArchive={format:'prcs-disaster-import-v1',service:'kitchens',settings:{},records:[{date:'2025-12-01',period_end:'2025-12-31',kind:'monthly',region:'غزة',bucket:'غزة',source:'test-kitchens',families:null,people:null,items:[{name:importedItem.name,unit:importedItem.unit,category:importedItem.category,fractional:false,quantity:5}]}]};
+assert.equal((await call('disaster-import',{section:'kitchens',data:kitchenArchive})).data.added,1);
+assert.equal((await call('disaster-import',{section:'kitchens',data:kitchenArchive})).data.skipped,1);
+cookie='';const archiveRead=(await call('kitchen-operations')).data.records;assert.equal(archiveRead.length,1);assert.equal(archiveRead[0].people,null);assert.equal(archiveRead[0].items[0].quantity,5);
+cookie=admin;assert.equal((await call('disaster-settings',{type:'item',id:importedItem.id,action:'delete'})).status,409);
+console.log('PASS kitchen archive: import, duplicate skip, public summaries, unknown beneficiaries and protected references');
 app.close();
