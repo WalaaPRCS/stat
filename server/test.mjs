@@ -121,4 +121,12 @@ assert.equal((await call('hospital-settings',{type:'department',id:departmentSav
 assert.equal((await call('hospital-settings',{type:'hospital',id:settingsHospitalId,action:'delete'})).status,200);
 assert.equal((await call('hospital-settings',{type:'hospital',id:'amal',action:'delete'})).status,409);
 console.log('PASS hospital settings: admin authorization, stable rename/address update, scoped departments/clinics, schedules and linked deletion protection');
+cookie=admin;
+const hospitalDefinitionArchive={format:'prcs-hospital-definitions-v1',hospitals:[{sourceId:'source-1',hospitalName:'Test source',departments:[{name:'Imported Test Department',description:'Test'}],clinics:[{name:'Imported Test Outpatient',departmentName:'Imported Test Department',address:'',services:[{name:'Consultation',scope:'',days:[],from:'',to:'',scheduleNote:''}]}]}]};
+const definitionMapping={'source-1':'amal'};
+cookie='';assert.equal((await call('hospital-settings',{action:'import',data:hospitalDefinitionArchive,hospitalMap:definitionMapping})).status,403);
+cookie=admin;const definitionsAdded=await call('hospital-settings',{action:'import',data:hospitalDefinitionArchive,hospitalMap:definitionMapping});assert.equal(definitionsAdded.data.addedDepartments,1);assert.equal(definitionsAdded.data.addedClinics,1);
+const definitionsSkipped=await call('hospital-settings',{action:'import',data:hospitalDefinitionArchive,hospitalMap:definitionMapping});assert.equal(definitionsSkipped.data.skippedDepartments,1);assert.equal(definitionsSkipped.data.skippedClinics,1);
+const invalidDefinitionArchive=structuredClone(hospitalDefinitionArchive);invalidDefinitionArchive.hospitals[0].departments.push({name:'Rollback import department',description:''});invalidDefinitionArchive.hospitals[0].clinics.push({name:'Invalid import clinic',departmentName:'Imported Test Department',services:[{name:'Test',scope:'',days:[9],from:'',to:'',scheduleNote:''}]});assert.equal((await call('hospital-settings',{action:'import',data:invalidDefinitionArchive,hospitalMap:definitionMapping})).status,400);assert.ok(!(await call('hospital-settings')).data.departments.some(d=>d.name==='Rollback import department'));
+console.log('PASS hospital definition import: mapping, admin authorization, duplicate skips and transactional rollback');
 app.close();
