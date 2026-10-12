@@ -18,7 +18,7 @@ const cookie=t=>'prcs_session='+t+'; HttpOnly; SameSite=Strict; Path=/; '+(secur
 const login=u=>{const token=randomBytes(32).toString('hex');sql.prepare('INSERT INTO app_sessions VALUES (?,?,?)').run(hash(token),u.id,Date.now()+8*3600000);return out({user:publicUser(u) },200,{'Set-Cookie':cookie(token)})};
 const attempts=new Map();
 async function handle(req,ip='local'){const url=new URL(req.url),p=url.pathname,u=identity(req),write=!['GET','HEAD'].includes(req.method);if(p==='/health')return out({ok:true});if(write&&(req.headers.get('Origin')!==origin||req.headers.get('X-PRCS-Action')!=='1'))return out({error:'طلب غير مصرح'},403);
-if(p==='/api/water-operations')return handleWater(req,u);
+if(p==='/api/water-operations'||p==='/api/water-import')return handleWater(req,u);
 if(p==='/api/awareness-activities'||p==='/api/awareness-import')return handleAwareness(req,u);
 if(p==='/api/kitchen-operations')return handleKitchens(req,u);
 if(p==='/api/relief-operations'||p==='/api/disaster-settings'||p==='/api/disaster-import')return handleRelief(req,u);
