@@ -1,3 +1,4 @@
+import {awarenessService} from './awareness.mjs';
 import {kitchenService} from './kitchens.mjs';
 import {reliefService} from './relief.mjs';
 import {gzipSync} from 'node:zlib';
@@ -7,7 +8,7 @@ export async function createApplication({filename=':memory:',origin='http://loca
 const sql=new DatabaseSync(filename);sql.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS schema_versions(name TEXT PRIMARY KEY);');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort()){if(sql.prepare('SELECT name FROM schema_versions WHERE name=?').get(f))continue;sql.exec('BEGIN');try{sql.exec(fs.readFileSync('drizzle/'+f,'utf8'));sql.prepare('INSERT INTO schema_versions VALUES (?)').run(f);sql.exec('COMMIT')}catch(e){sql.exec('ROLLBACK');throw e}}
 sql.exec(`CREATE TABLE IF NOT EXISTS app_users(id TEXT PRIMARY KEY,name TEXT NOT NULL,username TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,role TEXT NOT NULL,scope TEXT,facility TEXT,active INTEGER NOT NULL DEFAULT 1);CREATE TABLE IF NOT EXISTS app_sessions(token_hash TEXT PRIMARY KEY,user_id TEXT REFERENCES app_users(id),expires INTEGER NOT NULL);CREATE TABLE IF NOT EXISTS ems_centers(id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE,region TEXT NOT NULL);`);
 sql.exec('CREATE TABLE IF NOT EXISTS disaster_reports(date TEXT PRIMARY KEY,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL)');
-const handleRelief=reliefService(sql,out);const handleKitchens=kitchenService(sql,out);
+const handleRelief=reliefService(sql,out);const handleKitchens=kitchenService(sql,out);const handleAwareness=awarenessService(sql,out);
 const DB={prepare(query){return {params:[],bind(...params){this.params=params;return this},async run(){sql.prepare(query).run(...this.params);return {success:true}},async first(){return sql.prepare(query).get(...this.params)||null},async all(){return {results:sql.prepare(query).all(...this.params)}}}},async batch(stmts){sql.exec('BEGIN');try{const v=[];for(const s of stmts)v.push(await s.run());sql.exec('COMMIT');return v}catch(e){sql.exec('ROLLBACK');throw e}}};
 for(const endpoint of ['import-source','phc-import']){let p;do{const res=await worker.fetch(new Request(origin+'/api/'+endpoint,{method:'POST',headers:{'X-PRCS-Action':'1'},body:'{}'}),{DB});if(!res.ok)throw Error('Initialization failed: '+await res.text());p=await res.json()}while(!p.done)}
 const publicUser=u=>u?{id:u.id,name:u.name,username:u.username,role:u.role,scope:u.scope,facility:u.facility,active:u.active}:null;
@@ -16,6 +17,7 @@ const cookie=t=>'prcs_session='+t+'; HttpOnly; SameSite=Strict; Path=/; '+(secur
 const login=u=>{const token=randomBytes(32).toString('hex');sql.prepare('INSERT INTO app_sessions VALUES (?,?,?)').run(hash(token),u.id,Date.now()+8*3600000);return out({user:publicUser(u) },200,{'Set-Cookie':cookie(token)})};
 const attempts=new Map();
 async function handle(req,ip='local'){const url=new URL(req.url),p=url.pathname,u=identity(req),write=!['GET','HEAD'].includes(req.method);if(p==='/health')return out({ok:true});if(write&&(req.headers.get('Origin')!==origin||req.headers.get('X-PRCS-Action')!=='1'))return out({error:'طلب غير مصرح'},403);
+if(p==='/api/awareness-activities')return handleAwareness(req,u);
 if(p==='/api/kitchen-operations')return handleKitchens(req,u);
 if(p==='/api/relief-operations'||p==='/api/disaster-settings'||p==='/api/disaster-import')return handleRelief(req,u);
 if(p==='/api/auth/me')return out({user:publicUser(u),setup:!sql.prepare('SELECT id FROM app_users LIMIT 1').get()});
