@@ -14,4 +14,4 @@ const form=document.getElementById('awareness-form'),update=()=>{const values=aw
 }
 const beforeAwarenessRender=render;render=function(){beforeAwarenessRender();if(!Account.ready||DBState.loading||!['#disaster-service/awareness','#awareness-entry'].includes(location.hash))return;if(!Awareness.data){main.innerHTML=`<section class="panel empty"><h2>التوعية بالمخلفات الحربية</h2><p>${esc(Awareness.error||'تحميل البيانات…')}</p><button class="btn" id="awareness-retry">إعادة المحاولة</button></section>`;document.getElementById('awareness-retry').onclick=()=>{Awareness.error='';awarenessLoad()};if(!Awareness.busy&&!Awareness.error)awarenessLoad();return}if(location.hash==='#awareness-entry')awarenessEntry();else awarenessPage();document.getElementById('breadcrumb').textContent='الرئيسية / مواجهة الكوارث / التوعية بالمخلفات الحربية'};render();
 
-const waterScript=document.createElement('script');waterScript.src='/water.js?v=20261012-2';document.body.append(waterScript);
+const waterScript=document.createElement('script');waterScript.src='/water.js?v=20261012-3';document.body.append(waterScript);
