@@ -85,4 +85,12 @@ assert.equal((await call('water-operations',{action:'delete',id:waterProduction.
 assert.equal((await call('disaster-settings',{type:'waterStation',id:stationId,action:'delete'})).status,200);
 assert.equal((await call('disaster-settings',{type:'site',id:waterSiteId,action:'delete'})).status,200);
 console.log('PASS water: scoped CRUD, separate production/distribution, duplicate protection, liters validation, destination region and linked settings');
+cookie=admin;
+const waterArchive={format:'prcs-disaster-import-v1',service:'water',records:[{date:'2025-12-01',period_end:'2025-12-31',periodKind:'monthly',region:'غزة',bucket:'المجتمعات',kind:'distribution',waterType:'drinking',liters:1000,people:null,source:'test-water'}],reviewOnly:[{waterType:'desalination',detailLiters:0,sourceCumulativeLiters:9000}]};
+cookie='';assert.equal((await call('water-import',{data:waterArchive})).status,403);
+cookie=admin;const badWaterArchive=structuredClone(waterArchive);badWaterArchive.records[0].liters=-1;assert.equal((await call('water-import',{data:badWaterArchive})).status,400);
+assert.equal((await call('water-import',{data:waterArchive})).data.added,1);
+assert.equal((await call('water-import',{data:waterArchive})).data.skipped,1);
+cookie='';const waterArchiveRead=(await call('water-operations')).data;assert.equal(waterArchiveRead.records.length,1);assert.equal(waterArchiveRead.records[0].liters,1000);assert.equal(waterArchiveRead.records[0].people,null);assert.equal(waterArchiveRead.archiveReview[0].sourceCumulativeLiters,9000);
+console.log('PASS water archive: admin import, quantities validation, duplicate skip and unallocated review values');
 app.close();
