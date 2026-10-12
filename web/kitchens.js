@@ -14,4 +14,4 @@ document.getElementById('kitchen-form').onsubmit=async e=>{e.preventDefault();co
 }
 const beforeKitchenRender=render;render=function(){beforeKitchenRender();if(!Account.ready||DBState.loading||!['#disaster-service/kitchens','#kitchen-entry'].includes(location.hash))return;if(!Kitchens.data){main.innerHTML=`<section class="panel empty"><h2>التكيات</h2><p>${esc(Kitchens.error||'تحميل البيانات…')}</p><button class="btn" id="kitchen-retry">إعادة المحاولة</button></section>`;document.getElementById('kitchen-retry').onclick=()=>{Kitchens.error='';kitchensLoad()};if(!Kitchens.busy&&!Kitchens.error)kitchensLoad();return}if(location.hash==='#kitchen-entry')kitchenEntry();else kitchensPage();document.getElementById('breadcrumb').textContent='الرئيسية / مواجهة الكوارث / التكيات'};render();
 
-const awarenessScript=document.createElement('script');awarenessScript.src='/awareness.js?v=20261012-4';document.body.append(awarenessScript);
+const awarenessScript=document.createElement('script');awarenessScript.src='/awareness.js?v=20261012-5';document.body.append(awarenessScript);
