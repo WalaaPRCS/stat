@@ -16,3 +16,5 @@ const beforeFacilityRender=render;render=function(){beforeFacilityRender();const
 if(scope){if(!facilityReady(scope))return facilityLoading(scope);if(id)facilityStatistics(scope,id);else facilityList(scope);if(archiveButton)main.querySelector('.page-head')?.append(archiveButton)}
 const entry=FacilityHub.entry;if(entry&&hash==={hospital:'entry',phc:'phc-entry',ems:'ems-entry'}[entry.scope]){const el=document.getElementById({hospital:'db-form-hospital',phc:'phc-form-clinic',ems:'ems-form-region'}[entry.scope]);if(el&&!({hospital:DBState.edit,phc:PHC.edit,ems:EMS.edit}[entry.scope]))el.value=entry.id}else if(!hash.startsWith('facility/'))FacilityHub.entry=null;
 };render();
+
+const hospitalSettingsScript=document.createElement('script');hospitalSettingsScript.src='/hospital-settings.js?v=20261012-1';document.body.append(hospitalSettingsScript);
