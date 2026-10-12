@@ -1,0 +1,17 @@
+import {randomUUID} from 'node:crypto';
+export const awarenessKeys=['adultMale','adultFemale','childMale','childFemale'];
+export function awarenessService(sql,out){
+sql.exec('CREATE TABLE IF NOT EXISTS awareness_activities(id TEXT PRIMARY KEY,date TEXT NOT NULL,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL);CREATE INDEX IF NOT EXISTS awareness_date ON awareness_activities(date)');
+const constants=()=>Object.fromEntries(['site','siteType','project','partner'].map(type=>[type,sql.prepare('SELECT * FROM disaster_constants WHERE type=? ORDER BY name').all(type).map(x=>({id:x.id,name:x.name,...JSON.parse(x.payload)}))]));
+return async(req,u)=>{const data=constants();
+if(req.method==='GET')return out({constants:data,records:sql.prepare('SELECT id,payload FROM awareness_activities ORDER BY date DESC,updated_at DESC').all().map(r=>{const p=JSON.parse(r.payload);return {id:r.id,...p,site:data.site.find(x=>x.id===p.siteId)?.name||'—',project:data.project.find(x=>x.id===p.projectId)?.name||'',partner:data.partner.find(x=>x.id===p.partnerId)?.name||''}})});
+if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);if(!(u?.role==='admin'||u?.role==='entry'&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال التوعية'},403);
+let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
+if(b.id&&!sql.prepare('SELECT id FROM awareness_activities WHERE id=?').get(b.id))return out({error:'النشاط غير موجود'},404);
+if(b.action==='delete'){if(!b.id)return out({error:'اختر النشاط'},400);sql.prepare('DELETE FROM awareness_activities WHERE id=?').run(b.id);return out({saved:true})}
+const site=data.site.find(x=>x.id===b.siteId);if(!site||(b.projectId&&!data.project.some(x=>x.id===b.projectId))||(b.partnerId&&!data.partner.some(x=>x.id===b.partnerId)))return out({error:'اختر الموقع والمشروع والشريك من الإعدادات'},400);
+if(typeof b.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(b.date)||Number.isNaN(Date.parse(b.date))||new Date(b.date).toISOString().slice(0,10)!==b.date||b.date>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'})||!Number.isSafeInteger(b.sessions)||b.sessions<1||b.sessions>1e6||typeof b.reference!=='string'||b.reference.length>100||typeof b.notes!=='string'||b.notes.length>3000)return out({error:'تحقق من التاريخ وعدد الجلسات والمرجع'},400);
+if(!b.values||typeof b.values!=='object'||Array.isArray(b.values)||Object.keys(b.values).some(k=>!awarenessKeys.includes(k))||awarenessKeys.some(k=>!(b.values[k]===null||Number.isSafeInteger(b.values[k])&&b.values[k]>=0&&b.values[k]<=1e7)))return out({error:'المشاركون أعداد صحيحة غير سالبة؛ اترك غير المتوفر فارغًا'},400);
+const values=Object.fromEntries(awarenessKeys.map(k=>[k,b.values[k]])),total=awarenessKeys.every(k=>values[k]!=null)?awarenessKeys.reduce((n,k)=>n+values[k],0):null,payload={date:b.date,siteId:b.siteId,siteTypeId:site.siteTypeId,region:site.region,projectId:b.projectId||'',partnerId:b.partnerId||'',sessions:b.sessions,values,total,reference:b.reference.trim(),notes:b.notes.trim()},id=b.id||randomUUID();
+if(!b.id&&sql.prepare('SELECT id FROM awareness_activities WHERE date=? AND payload=?').get(b.date,JSON.stringify(payload)))return out({error:'نشاط مطابق مسجل مسبقًا'},409);
+sql.prepare('INSERT INTO awareness_activities VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET date=excluded.date,payload=excluded.payload,updated_by=excluded.updated_by,updated_at=excluded.updated_at').run(id,b.date,JSON.stringify(payload),u.id,new Date().toISOString());return out({saved:true,id});};}
