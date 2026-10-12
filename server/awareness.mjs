@@ -1,10 +1,26 @@
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 export const awarenessKeys=['adultMale','adultFemale','childMale','childFemale'];
 export function awarenessService(sql,out){
 sql.exec('CREATE TABLE IF NOT EXISTS awareness_activities(id TEXT PRIMARY KEY,date TEXT NOT NULL,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL);CREATE INDEX IF NOT EXISTS awareness_date ON awareness_activities(date)');
+sql.exec('CREATE TABLE IF NOT EXISTS awareness_summaries(id TEXT PRIMARY KEY,payload TEXT NOT NULL)');
 const constants=()=>Object.fromEntries(['site','siteType','project','partner'].map(type=>[type,sql.prepare('SELECT * FROM disaster_constants WHERE type=? ORDER BY name').all(type).map(x=>({id:x.id,name:x.name,...JSON.parse(x.payload)}))]));
 return async(req,u)=>{const data=constants();
-if(req.method==='GET')return out({constants:data,records:sql.prepare('SELECT id,payload FROM awareness_activities ORDER BY date DESC,updated_at DESC').all().map(r=>{const p=JSON.parse(r.payload);return {id:r.id,...p,site:data.site.find(x=>x.id===p.siteId)?.name||'—',project:data.project.find(x=>x.id===p.projectId)?.name||'',partner:data.partner.find(x=>x.id===p.partnerId)?.name||''}})});
+if(new URL(req.url).pathname==='/api/awareness-import'){
+if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);if(u?.role!=='admin')return out({error:'استيراد الأرشيف لمدير النظام فقط'},403);
+let b;try{b=await req.json()}catch{return out({error:'ملف غير صالح'},400)}
+const input=b.data;if(input?.format!=='prcs-disaster-import-v1'||input.service!=='awareness'||!Array.isArray(input.records)||!input.records.length||input.records.length>10000)return out({error:'اختر ملف أرشيف التوعية المُجهّز'},400);
+const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;let added=0,skipped=0;sql.exec('BEGIN IMMEDIATE');try{
+for(const r of input.records){if(!validDate(r.date)||!validDate(r.period_end)||r.date>r.period_end||r.period_end>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'})||r.kind!=='monthly'||!['شمال غزة','غزة','الوسطى','خانيونس','رفح'].includes(r.region)||!Number.isSafeInteger(r.sessions)||r.sessions<0||r.sessions>1e7||typeof r.source!=='string'||!r.source||r.source.length>200)throw Error('فترة أو محافظة أو عدد جلسات غير صالح');
+if(!r.values||typeof r.values!=='object'||Array.isArray(r.values)||Object.keys(r.values).some(k=>!awarenessKeys.includes(k))||awarenessKeys.some(k=>!(r.values[k]===null||Number.isSafeInteger(r.values[k])&&r.values[k]>=0&&r.values[k]<=1e8)))throw Error('أعداد المشاركين غير صالحة');
+const values=Object.fromEntries(awarenessKeys.map(k=>[k,r.values[k]])),total=awarenessKeys.every(k=>values[k]!=null)?awarenessKeys.reduce((n,k)=>n+values[k],0):null;if(r.total!==total)throw Error('مجموع المشاركين لا يطابق تفاصيل العمر والجنس');
+const payload={date:r.date,period_end:r.period_end,kind:'monthly',region:r.region,sessions:r.sessions,values,total,source:r.source,site:'ملخص محافظة '+r.region,project:'',partner:'',reference:'',notes:'ملخص أرشيفي شهري حسب المحافظة؛ أسماء المواقع والمشاريع والشركاء غير متوفرة، وقد يتكرر المشاركون.'},id='awareness-archive-'+createHash('sha256').update([r.source,r.region,r.date,r.period_end].join('|')).digest('hex').slice(0,32),old=sql.prepare('SELECT payload FROM awareness_summaries WHERE id=?').get(id);
+if(old){if(old.payload!==JSON.stringify(payload))throw Error('ملخص مستورد سابقًا بمحتوى مختلف؛ لم يتم استبداله');skipped++;continue}
+if(sql.prepare('SELECT payload FROM awareness_summaries').all().some(x=>{const p=JSON.parse(x.payload);return p.region===r.region&&p.date<=r.period_end&&p.period_end>=r.date}))throw Error('توجد فترة أرشيف متداخلة لنفس المحافظة');
+sql.prepare('INSERT INTO awareness_summaries VALUES(?,?)').run(id,JSON.stringify(payload));added++;
+}sql.exec('COMMIT');return out({added,skipped,addedConstants:0});}catch(e){sql.exec('ROLLBACK');return out({error:e.message||'تعذر الاستيراد؛ لم يُحفظ أي تغيير'},400)}
+}
+
+if(req.method==='GET')return out({constants:data,records:sql.prepare('SELECT id,payload FROM awareness_activities ORDER BY date DESC,updated_at DESC').all().map(r=>{const p=JSON.parse(r.payload);return {id:r.id,kind:'daily',...p,site:data.site.find(x=>x.id===p.siteId)?.name||'—',project:data.project.find(x=>x.id===p.projectId)?.name||'',partner:data.partner.find(x=>x.id===p.partnerId)?.name||''}}).concat(sql.prepare('SELECT * FROM awareness_summaries').all().map(r=>({id:r.id,...JSON.parse(r.payload)}))).sort((a,b)=>b.date.localeCompare(a.date))});
 if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);if(!(u?.role==='admin'||u?.role==='entry'&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال التوعية'},403);
 let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
 if(b.id&&!sql.prepare('SELECT id FROM awareness_activities WHERE id=?').get(b.id))return out({error:'النشاط غير موجود'},404);
