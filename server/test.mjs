@@ -129,4 +129,26 @@ cookie=admin;const definitionsAdded=await call('hospital-settings',{action:'impo
 const definitionsSkipped=await call('hospital-settings',{action:'import',data:hospitalDefinitionArchive,hospitalMap:definitionMapping});assert.equal(definitionsSkipped.data.skippedDepartments,1);assert.equal(definitionsSkipped.data.skippedClinics,1);
 const invalidDefinitionArchive=structuredClone(hospitalDefinitionArchive);invalidDefinitionArchive.hospitals[0].departments.push({name:'Rollback import department',description:''});invalidDefinitionArchive.hospitals[0].clinics.push({name:'Invalid import clinic',departmentName:'Imported Test Department',services:[{name:'Test',scope:'',days:[9],from:'',to:'',scheduleNote:''}]});assert.equal((await call('hospital-settings',{action:'import',data:invalidDefinitionArchive,hospitalMap:definitionMapping})).status,400);assert.ok(!(await call('hospital-settings')).data.departments.some(d=>d.name==='Rollback import department'));
 console.log('PASS hospital definition import: mapping, admin authorization, duplicate skips and transactional rollback');
+
+app.sql.prepare('INSERT INTO hospitals(id,name,region) VALUES (?,?,?)').run('quds','Other test hospital','غزة');
+const sharedRoot=await call('hospital-settings',{type:'department',hospitalId:'amal',name:'Shared Root Test',description:'',sortOrder:1});assert.equal(sharedRoot.status,200);
+let sharedSettings=(await call('hospital-settings')).data;const rootDefinition=sharedSettings.departments.find(x=>x.id===sharedRoot.data.id).definition_id;
+const secondRoot=await call('hospital-settings',{type:'department',hospitalId:'quds',definitionId:rootDefinition,name:'Ignored',description:'Other local description'});assert.equal(secondRoot.status,200);
+sharedSettings=(await call('hospital-settings')).data;assert.equal(sharedSettings.definitions.filter(x=>x.kind==='department'&&x.name==='Shared Root Test').length,1);assert.equal(sharedSettings.departments.find(x=>x.id===secondRoot.data.id).definition_id,rootDefinition);
+const sharedChild=await call('hospital-settings',{type:'department',hospitalId:'amal',parentId:sharedRoot.data.id,name:'Shared Child Test',description:'',sortOrder:2});assert.equal(sharedChild.status,200);
+assert.equal((await call('hospital-settings',{type:'department',id:sharedRoot.data.id,hospitalId:'amal',definitionId:rootDefinition,name:'Rollback shared name',renameShared:true,description:'',parentId:sharedChild.data.id})).status,400);
+assert.equal((await call('hospital-settings')).data.definitions.find(x=>x.id===rootDefinition).name,'Shared Root Test');
+assert.equal((await call('hospital-settings',{type:'department',id:sharedRoot.data.id,hospitalId:'amal',definitionId:rootDefinition,name:'Shared Renamed Test',renameShared:true,description:'Updated',parentId:'',sortOrder:3})).status,200);
+assert.equal((await call('hospital-settings')).data.departments.find(x=>x.id===secondRoot.data.id).name,'Shared Renamed Test');
+const sharedClinic=await call('hospital-settings',{type:'clinic',hospitalId:'amal',departmentId:sharedChild.data.id,name:'Shared Clinic Test',address:'Local address',services:[]});assert.equal(sharedClinic.status,200);
+const clinicDefinition=(await call('hospital-settings')).data.clinics.find(x=>x.id===sharedClinic.data.id).definition_id;
+const otherClinic=await call('hospital-settings',{type:'clinic',hospitalId:'quds',definitionId:clinicDefinition,departmentId:secondRoot.data.id,address:'Other local address',services:[]});assert.equal(otherClinic.status,200);
+assert.equal((await call('hospital-settings')).data.clinics.find(x=>x.id===otherClinic.data.id).address,'Other local address');
+const moveBody={type:'department',id:sharedRoot.data.id,hospitalId:'quds',definitionId:rootDefinition,name:'Shared Renamed Test',description:'',parentId:'',sortOrder:3};assert.equal((await call('hospital-settings',moveBody)).status,409);
+assert.equal((await call('hospital-settings')).data.departments.find(x=>x.id===sharedChild.data.id).hospital_id,'amal');
+assert.equal((await call('hospital-settings',{type:'clinic',id:otherClinic.data.id,action:'delete'})).status,200);
+assert.equal((await call('hospital-settings',{type:'department',id:secondRoot.data.id,action:'delete'})).status,200);
+assert.equal((await call('hospital-settings',moveBody)).status,200);sharedSettings=(await call('hospital-settings')).data;assert.equal(sharedSettings.departments.find(x=>x.id===sharedChild.data.id).hospital_id,'quds');assert.equal(sharedSettings.clinics.find(x=>x.id===sharedClinic.data.id).hospital_id,'quds');assert.equal(sharedSettings.clinics.find(x=>x.id===sharedClinic.data.id).address,'Local address');
+assert.equal((await call('hospital-settings',{type:'department',id:sharedRoot.data.id,action:'delete'})).status,409);
+console.log('PASS shared hospital names: reuse, cross-hospital rename, local clinic details, cycle rollback, subtree transfer and collision rollback');
 app.close();
