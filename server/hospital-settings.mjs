@@ -85,6 +85,34 @@ export function hospitalSettingsService(sql,out){
     let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
     try{return out(transact(()=>{
       if(b.action==='hospital.save')return ensureHospital(b.name,b.region,b.address||'',b.status||'فعال',b.start||'',b.id||null);
+      if(b.action==='structure.import'){
+        const hospitalId=b.hospitalId,groups=b.serviceTypes;
+        if(!getHospital(hospitalId))throw bad('اختر مستشفى صالحًا للاستيراد');
+        if(!Array.isArray(groups)||groups.length>20)throw bad('ملف الاستيراد غير صالح');
+        let addedDepartments=0,linkedDepartments=0,skippedDepartments=0,addedBranches=0,skippedBranches=0,addedServiceTypes=0;
+        let branchCount=0,departmentCount=0;
+        for(const group of groups){
+          if(!validName(group?.name)||!Array.isArray(group.departments))throw bad('تحقق من أسماء أنواع الخدمة والأقسام في الملف');
+          let type=sql.prepare('SELECT * FROM hospital_service_types WHERE norm=?').get(norm(group.name));
+          if(!type){const saved=catalogSave('hospital_service_types',null,group.name);type=getService(saved.id);addedServiceTypes++}
+          sql.prepare('INSERT OR IGNORE INTO hospital_service_type_links(hospital_id,service_type_id) VALUES(?,?)').run(hospitalId,type.id);
+          departmentCount+=group.departments.length;if(departmentCount>500)throw bad('يتجاوز الملف الحد الأقصى للأقسام');
+          for(const item of group.departments){
+            if(!validName(item?.name)||!Array.isArray(item.branches))throw bad('تحقق من أسماء الأقسام والفروع في الملف');
+            let dep=sql.prepare('SELECT * FROM hospital_department_catalog WHERE norm=?').get(norm(item.name));
+            if(!dep){const saved=catalogSave('hospital_department_catalog',null,item.name,{description:item.description||''});dep=getDepartment(saved.id);addedDepartments++}else skippedDepartments++;
+            if(!assigned(hospitalId,type.id,dep.id)){sql.prepare('INSERT INTO hospital_department_links(hospital_id,service_type_id,department_id,sort_order) VALUES(?,?,?,?)').run(hospitalId,type.id,dep.id,Number(item.sortOrder)||0);linkedDepartments++}
+            for(const branchName of item.branches){
+              branchCount++;if(branchCount>5000)throw bad('يتجاوز الملف الحد الأقصى للفروع');
+              if(!validName(branchName))throw bad('اسم فرع غير صالح في الملف');
+              const branchNorm=norm(branchName),exists=sql.prepare('SELECT 1 FROM hospital_branch_catalog WHERE department_id=? AND norm=?').get(dep.id,branchNorm);
+              if(exists){skippedBranches++;continue}
+              sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm) VALUES(?,?,?,?)').run('branch-'+randomUUID(),dep.id,branchName.trim(),branchNorm);addedBranches++;
+            }
+          }
+        }
+        return {saved:true,addedServiceTypes,addedDepartments,linkedDepartments,skippedDepartments,addedBranches,skippedBranches};
+      }
       if(b.action==='hospital.delete'){
         const h=getHospital(b.id);if(!h)throw bad('المستشفى غير موجود');
         const protectedTables=['hospital_records','source_rows','source_snapshots','import_issues'];
@@ -122,3 +150,4 @@ export function hospitalSettingsService(sql,out){
   }
   return handle;
 }
+
