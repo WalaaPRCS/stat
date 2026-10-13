@@ -71,7 +71,7 @@ export function hospitalSettingsService(sql,out){
     return {id:hospitalId};
   };
   async function handle(req,user){
-    if((req.method!=='GET'&&user?.role!=='admin')||(req.method==='GET'&&user?.role!=='admin'&&!(user?.role==='entry'&&user.scope==='hospital')))return out({error:'إعدادات المستشفيات متاحة لمدير النظام ومدخلي بيانات المستشفيات فقط'},403);
+    if(user?.role!=='admin')return out({error:'إعدادات المستشفيات لمدير النظام فقط'},403);
     if(req.method==='GET'){
       return out({
         hospitals:sql.prepare('SELECT id,name,region,location,status,start FROM hospitals ORDER BY name').all(),
@@ -151,74 +151,3 @@ export function hospitalSettingsService(sql,out){
   return handle;
 }
 
-
-
-export function hospitalActivityService(sql,out){
-  sql.exec('CREATE TABLE IF NOT EXISTS hospital_activity_records(id TEXT PRIMARY KEY,hospital_id TEXT NOT NULL REFERENCES hospitals(id),service_type_id TEXT NOT NULL REFERENCES hospital_service_types(id),date TEXT NOT NULL,entries_json TEXT NOT NULL,notes TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL); CREATE UNIQUE INDEX IF NOT EXISTS hospital_activity_unique_date ON hospital_activity_records(hospital_id,service_type_id,date)');
-  const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
-  const fieldsFor=(hospitalId,typeId)=>{
-    const departments=sql.prepare('SELECT d.id,d.name,d.description FROM hospital_department_links l JOIN hospital_department_catalog d ON d.id=l.department_id WHERE l.hospital_id=? AND l.service_type_id=? ORDER BY l.sort_order,d.name').all(hospitalId,typeId);
-    return departments.map(department=>{
-      const branches=sql.prepare('SELECT id,name FROM hospital_branch_catalog WHERE department_id=? ORDER BY name').all(department.id);
-      return {...department,fields:branches.length?branches.map(branch=>({key:'b:'+branch.id,branchId:branch.id,label:branch.name})): [{key:'d:'+department.id,branchId:null,label:'عدد الحالات'}]};
-    });
-  };
-  const canWrite=(user,hospitalId)=>user?.role==='admin'||user?.role==='entry'&&user.scope==='hospital'&&user.facility===hospitalId;
-  async function handle(req,user){
-    if(req.method==='GET'){
-      const url=new URL(req.url),hospital=url.searchParams.get('hospital'),from=url.searchParams.get('from'),to=url.searchParams.get('to');
-      const where=[],params=[];
-      if(hospital){where.push('r.hospital_id=?');params.push(hospital)}
-      if(from){where.push('r.date>=?');params.push(from)}
-      if(to){where.push('r.date<=?');params.push(to)}
-      const rows=sql.prepare('SELECT r.*,h.name AS hospital_name,t.name AS service_type_name FROM hospital_activity_records r JOIN hospitals h ON h.id=r.hospital_id JOIN hospital_service_types t ON t.id=r.service_type_id'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY r.date DESC,h.name,t.name').all(...params);
-      return out(rows.map(row=>({...row,entries:JSON.parse(row.entries_json),entries_json:undefined,notes:user?.role==='admin'||user?.role==='entry'&&user.scope==='hospital'&&user.facility===row.hospital_id?row.notes:undefined})));
-    }
-    if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
-    if(!user)return out({error:'سجل الدخول لإدخال البيانات'},401);
-    let body;try{body=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
-    try{
-      if(body.action==='delete'){
-        const record=sql.prepare('SELECT * FROM hospital_activity_records WHERE id=?').get(body.id);
-        if(!record)return out({error:'السجل غير موجود'},404);
-        if(!canWrite(user,record.hospital_id)||body.hospital&&body.hospital!==record.hospital_id)return out({error:'السجل خارج المنشأة المخصصة لك'},403);
-        sql.prepare('DELETE FROM hospital_activity_records WHERE id=?').run(record.id);
-        return out({saved:true});
-      }
-      const hospital=sql.prepare('SELECT id FROM hospitals WHERE id=?').get(body.hospital);
-      if(!hospital)return out({error:'اختر مستشفى صالحًا'},400);
-      if(!canWrite(user,body.hospital))return out({error:'السجل خارج المنشأة المخصصة لك'},403);
-      const service=sql.prepare('SELECT t.id FROM hospital_service_types t JOIN hospital_service_type_links l ON l.service_type_id=t.id WHERE t.id=? AND l.hospital_id=?').get(body.serviceTypeId,body.hospital);
-      if(!service)return out({error:'اختر نوع خدمة مرتبطًا بالمستشفى'},400);
-      if(!validDate(body.date)||body.date>new Date().toISOString().slice(0,10))return out({error:'أدخل تاريخًا صحيحًا غير مستقبلي'},400);
-      if(!body.values||typeof body.values!=='object'||Array.isArray(body.values))return out({error:'أدخل بيانات الفروع'},400);
-      const definitions=fieldsFor(body.hospital,body.serviceTypeId),fields=definitions.flatMap(department=>department.fields);
-      if(!fields.length)return out({error:'أضف الأقسام والفروع من إعدادات المستشفيات أولًا'},400);
-      if(fields.length>1500)return out({error:'عدد حقول الإعدادات يتجاوز الحد المسموح'},400);
-      const allowed=new Set(fields.map(field=>field.key)),submitted=Object.keys(body.values);
-      if(submitted.some(key=>!allowed.has(key)))return out({error:'توجد حقول لا تتبع إعدادات هذا المستشفى ونوع الخدمة'},400);
-      const values={};
-      for(const field of fields){
-        const value=body.values[field.key];
-        if(value==null||value===''){values[field.key]=null;continue}
-        if(!Number.isSafeInteger(value)||value<0)return out({error:'القيم يجب أن تكون أعدادًا صحيحة غير سالبة'},400);
-        values[field.key]=value;
-      }
-      if(!Object.values(values).some(value=>value!==null))return out({error:'أدخل قيمة واحدة على الأقل'},400);
-      const entries=definitions.flatMap(department=>department.fields.map(field=>({key:field.key,departmentId:department.id,departmentName:department.name,branchId:field.branchId,label:field.label,value:values[field.key]})));
-      if(typeof body.notes!=='string'||body.notes.length>3000)return out({error:'الملاحظات أطول من المسموح'},400);
-      const existing=sql.prepare('SELECT * FROM hospital_activity_records WHERE hospital_id=? AND service_type_id=? AND date=?').get(body.hospital,body.serviceTypeId,body.date);
-      if(body.id){
-        const record=sql.prepare('SELECT * FROM hospital_activity_records WHERE id=?').get(body.id);
-        if(!record||record.hospital_id!==body.hospital||record.service_type_id!==body.serviceTypeId||record.date!==body.date)return out({error:'تعذر العثور على السجل المطلوب تعديله'},404);
-        sql.prepare('UPDATE hospital_activity_records SET entries_json=?,notes=?,updated_at=? WHERE id=?').run(JSON.stringify(entries),body.notes.trim(),new Date().toISOString(),record.id);
-        return out({id:record.id,saved:true});
-      }
-      if(existing)return out({error:'توجد إحصائية مسجلة لهذا المستشفى ونوع الخدمة والتاريخ'},409);
-      const id='activity-'+randomUUID(),now=new Date().toISOString();
-      sql.prepare('INSERT INTO hospital_activity_records(id,hospital_id,service_type_id,date,entries_json,notes,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)').run(id,body.hospital,body.serviceTypeId,body.date,JSON.stringify(entries),body.notes.trim(),now,now);
-      return out({id,saved:true});
-    }catch(error){return out({error:error.message||'تعذر حفظ الإحصائية'},error.status||400)}
-  }
-  return handle;
-}
