@@ -119,5 +119,9 @@ assert.equal((await call('hospital-settings',{action:'department.unlink',hospita
 assert.equal((await call('hospital-settings',{action:'department.delete',id:department.data.id})).status,200);
 assert.ok((await call('config')).data.hospitals.some(h=>h.id==='amal'));
 assert.ok((await call('records')).data.length>0);
+const importFixture={format:'prcs-hospital-structure-v1',serviceTypes:[{name:'الخدمات المساندة',departments:[{name:'قسم مستورد للاختبار',branches:['فرع مستورد للاختبار']}]}]};
+let importResult=await call('hospital-settings',{action:'structure.import',hospitalId:'amal',serviceTypes:importFixture.serviceTypes});assert.equal(importResult.status,200);assert.equal(importResult.data.addedDepartments,1);assert.equal(importResult.data.addedBranches,1);
+importResult=await call('hospital-settings',{action:'structure.import',hospitalId:'amal',serviceTypes:importFixture.serviceTypes});assert.equal(importResult.status,200);assert.equal(importResult.data.addedDepartments,0);assert.equal(importResult.data.addedBranches,0);assert.equal(importResult.data.skippedBranches,1);
+console.log('PASS hospital hierarchy import: new records and safe duplicate skip');
 console.log('PASS hospital settings: admin access, shared definitions, hospital links, duplicate prevention, branches and safe deletion');
 app.close();
