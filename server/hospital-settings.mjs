@@ -204,6 +204,7 @@ export function hospitalActivityService(sql,out){
         const value=body.values[field.key];
         if(field.ageGenderBreakdown){
           if(value==null||value===''){values[field.key]={breakdown:null,total:null};continue}
+          if(Number.isSafeInteger(value)&&value>=0){values[field.key]={breakdown:null,total:value};continue}
           if(!value||typeof value!=='object'||Array.isArray(value))return out({error:'أدخل تفصيل العمر والجنس لكل تخصص'},400);
           const keys=['male_under18','female_under18','male_18_65','female_18_65','male_over65','female_over65'];if(Object.keys(value).some(key=>!keys.includes(key)))return out({error:'تفصيل العمر والجنس غير صالح'},400);
           const detail={};for(const key of keys){const part=value[key];if(part==null||part===''){detail[key]=null;continue}if(!Number.isSafeInteger(part)||part<0)return out({error:'القيم يجب أن تكون أعدادًا صحيحة غير سالبة'},400);detail[key]=part}
