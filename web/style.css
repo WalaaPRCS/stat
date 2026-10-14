@@ -77,3 +77,5 @@
 @media(max-width:700px){.activity-breakdown{padding:9px}.activity-sex-input{display:flex;flex-direction:column;align-items:stretch}}
 
 .activity-entry-detail{margin:6px 0 0 16px;color:var(--muted);font-size:12px}.activity-entry-detail summary{cursor:pointer;color:#a32236}.activity-entry-detail p{margin:5px 0}
+
+.activity-breakdown-details{margin-top:6px}.activity-breakdown-details>summary{cursor:pointer;display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#52677c;font-size:12px;padding:5px 0}.activity-breakdown-details>summary span{color:#8291a1;font-size:11px}.activity-breakdown-details>summary small{flex-basis:100%;color:#9a6b23;font-size:11px}.activity-breakdown-content{padding-top:6px}.activity-breakdown-details[open]>summary{color:#a32236}
