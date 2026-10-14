@@ -36,10 +36,10 @@ const syncEMS=async()=>{
   if(!response.ok)throw new Error(response.status===401?'رفض نظام الإسعاف مفتاح التكامل':('تعذر جلب بيانات الإسعاف (HTTP '+response.status+')'));
   const payload=await response.json();
   if(payload?.schema!=='prcs-ems-summary-v1'||!Array.isArray(payload.rows)||payload.rows.length>50000)throw new Error('استجابة نظام الإسعاف غير صالحة');
-  const provinces=['شمال غزة','غزة','الوسطى','خانيونس','رفح'],daily=[],months=new Map(),seen=new Set();
+  const daily=[],months=new Map(),seen=new Set();
   const countKeys=['accidents','births','injuries','martyrs','medical_cases','other_cases','total'];
   for(const row of payload.rows){
-   if(!validISODate(row.date)||row.date<syncFrom||row.date>syncTo||typeof row.station!=='string'||!row.station.trim()||row.station.length>160||!provinces.includes(row.governorate))throw new Error('توجد مجموعة إحصائية غير صالحة في استجابة الإسعاف');
+   if(!validISODate(row.date)||row.date<syncFrom||row.date>syncTo||typeof row.station!=='string'||!row.station.trim()||row.station.length>160||typeof row.governorate!=='string'||!row.governorate.trim()||row.governorate.length>100)throw new Error('توجد مجموعة إحصائية غير صالحة في استجابة الإسعاف');
    for(const key of countKeys)if(!Number.isSafeInteger(row[key])||row[key]<0)throw new Error('توجد قيمة غير صالحة في استجابة الإسعاف');
    const station=row.station.trim(),unique=station+'|'+row.date;if(seen.has(unique))throw new Error('توجد سجلات مكررة في استجابة الإسعاف');seen.add(unique);
    const raw={accident:row.accidents,childbirth:row.births,illness:row.medical_cases,injuries:row.injuries,deceased:row.martyrs,other:row.other_cases,total:row.total,governorate:row.governorate};
