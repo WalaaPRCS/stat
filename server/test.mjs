@@ -154,6 +154,7 @@ assert.equal(detailed.status,200);
 let detailedRow=(await call('hospital-activity-records')).data.find(row=>row.date===detailDate);
 assert.equal(detailedRow.entries[0].value,10);assert.deepEqual(detailedRow.entries[0].breakdown,{male_under18:2,female_under18:1,male_18_65:3,female_18_65:2,male_over65:1,female_over65:1});
 assert.equal((await call('hospital-activity-records',{hospital:'amal',serviceTypeId:direct.id,date:new Date(Date.now()-2*86400000).toISOString().slice(0,10),values:{[detailKey]:{male_under18:-1}},notes:''})).status,400);
+const totalOnlyDate=new Date(Date.now()-3*86400000).toISOString().slice(0,10);assert.equal((await call('hospital-activity-records',{hospital:'amal',serviceTypeId:direct.id,date:totalOnlyDate,values:{[detailKey]:5},notes:''})).status,200);const totalOnlyRow=(await call('hospital-activity-records')).data.find(row=>row.date===totalOnlyDate);assert.equal(totalOnlyRow.entries[0].value,5);assert.equal(totalOnlyRow.entries[0].breakdown,null);
 await call('users',{name:'Hospital Scoped',username:'hospital_scoped',password:'ExamplePassword123',role:'entry',scope:'hospital',facility:'amal'});
 cookie=(await call('auth/login',{username:'hospital_scoped',password:'ExamplePassword123'})).cookie;
 assert.equal((await call('hospital-settings')).status,200);
