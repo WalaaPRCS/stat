@@ -173,4 +173,28 @@ cookie=admin;
 assert.equal((await call('hospital-activity-records',{action:'delete',id:activity.data.id,hospital:'amal'})).status,200);
 console.log('PASS hospital activity statistics: settings-driven fields, duplicate and key validation, scoped entry access, anonymous read and delete');
 
+
+const integrationOrigin='http://integration.test';
+let integrationFetches=0;
+const integrationApp=await createApplication({origin:integrationOrigin,setupKey:'integration-setup-key',integrationUrl:'https://ems.test/api/integrations/statistics/ambulance',integrationToken:'integration-secret',fetchImpl:async url=>{integrationFetches++;const date=new URL(url).searchParams.get('to');return Response.json({schema:'prcs-ems-summary-v1',rows:[{date,station:'مركز اختبار',governorate:'غزة',accidents:2,births:1,injuries:3,martyrs:1,medical_cases:4,other_cases:2,total:11}]})}});
+const integrationSetup=await integrationApp.handle(new Request(integrationOrigin+'/api/auth/setup',{method:'POST',headers:{Origin:integrationOrigin,'X-PRCS-Action':'1','Content-Type':'application/json'},body:JSON.stringify({name:'مدير اختبار',username:'integration_admin',password:'IntegrationPassword123',setupKey:'integration-setup-key'})}));
+assert.equal(integrationSetup.status,200);
+const integrationCookie=integrationSetup.headers.get('Set-Cookie').split(';')[0];
+async function integrationCall(path,body,session=integrationCookie){const response=await integrationApp.handle(new Request(integrationOrigin+'/api/'+path,body?{method:'POST',headers:{Origin:integrationOrigin,'X-PRCS-Action':'1',Cookie:session,'Content-Type':'application/json'},body:JSON.stringify(body)}:{headers:{Cookie:session}}));return {status:response.status,data:await response.json()}}
+assert.equal((await integrationApp.handle(new Request(integrationOrigin+'/api/ems-sync',{method:'POST',headers:{Origin:integrationOrigin,'X-PRCS-Action':'1','Content-Type':'application/json'},body:'{}'}))).status,403);
+const syncResult=await integrationCall('ems-sync',{});
+assert.equal(syncResult.status,200);assert.equal(syncResult.data.status,'ok');assert.equal(syncResult.data.recordCount,1);
+let integratedReport=(await integrationCall('ems-report')).data;
+let autoRows=integratedReport.records.filter(row=>row.external_sync);
+assert.equal(autoRows.length,2);
+const autoDaily=autoRows.find(row=>row.kind==='daily');
+assert.equal(autoDaily.values.accident,2);assert.equal(autoDaily.values.childbirth,1);assert.equal(autoDaily.values.injuries_total,3);assert.equal(autoDaily.values.deceased,1);assert.equal(autoDaily.values.medical_total,7);assert.equal(autoDaily.values.total,11);
+assert.equal('name' in autoDaily,false);assert.equal('phone' in autoDaily,false);
+await integrationCall('ems-sync',{});
+integratedReport=(await integrationCall('ems-report')).data;
+assert.equal(integratedReport.records.filter(row=>row.external_sync).length,2);
+assert.equal(integrationFetches,2);
+integrationApp.close();
+console.log('PASS EMS integration: secure admin sync, aggregate-only import, monthly/daily totals and idempotent refresh');
+
 app.close();
