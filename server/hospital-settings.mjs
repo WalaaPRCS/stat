@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 const norm=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/\s+/g,' ').trim().toLowerCase();
 const validName=value=>typeof value==='string'&&value.trim().length>0&&value.trim().length<=160;
 const regions=['شمال غزة','غزة','الوسطى','خانيونس','رفح'];
+const inputModeForBranch=name=>{const value=norm(name);return (value.includes('اطفال')&&(value.includes('عياد')||value.includes('جراح')))?'gender':'age_gender'};
 
 export function hospitalSettingsService(sql,out){
   sql.exec(`
@@ -32,6 +33,9 @@ export function hospitalSettingsService(sql,out){
   `);
   sql.exec('PRAGMA foreign_keys=ON');
   if(!sql.prepare('PRAGMA table_info(hospital_department_links)').all().some(c=>c.name==='age_gender_breakdown')){sql.exec('ALTER TABLE hospital_department_links ADD COLUMN age_gender_breakdown INTEGER NOT NULL DEFAULT 0');sql.exec("UPDATE hospital_department_links SET age_gender_breakdown=1 WHERE department_id IN (SELECT id FROM hospital_department_catalog WHERE name LIKE '%العيادات الخارجية%')");}
+  if(!sql.prepare('PRAGMA table_info(hospital_department_links)').all().some(c=>c.name==='input_mode'))sql.exec("ALTER TABLE hospital_department_links ADD COLUMN input_mode TEXT NOT NULL DEFAULT 'age_gender'");
+  if(!sql.prepare('PRAGMA table_info(hospital_branch_catalog)').all().some(c=>c.name==='input_mode'))sql.exec("ALTER TABLE hospital_branch_catalog ADD COLUMN input_mode TEXT NOT NULL DEFAULT 'age_gender'");
+  for(const branch of sql.prepare('SELECT id,name FROM hospital_branch_catalog').all())sql.prepare('UPDATE hospital_branch_catalog SET input_mode=? WHERE id=?').run(inputModeForBranch(branch.name),branch.id);
   // Keep normalized hospital names available for duplicate checks across application restarts.
   if(!sql.prepare('PRAGMA table_info(hospitals)').all().some(c=>c.name==='norm_name'))sql.exec('ALTER TABLE hospitals ADD COLUMN norm_name TEXT');
   for(const h of sql.prepare('SELECT id,name FROM hospitals WHERE norm_name IS NULL').all())sql.prepare('UPDATE hospitals SET norm_name=? WHERE id=?').run(norm(h.name),h.id);
@@ -108,7 +112,7 @@ export function hospitalSettingsService(sql,out){
               if(!validName(branchName))throw bad('اسم فرع غير صالح في الملف');
               const branchNorm=norm(branchName),exists=sql.prepare('SELECT 1 FROM hospital_branch_catalog WHERE department_id=? AND norm=?').get(dep.id,branchNorm);
               if(exists){skippedBranches++;continue}
-              sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm) VALUES(?,?,?,?)').run('branch-'+randomUUID(),dep.id,branchName.trim(),branchNorm);addedBranches++;
+              sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run('branch-'+randomUUID(),dep.id,branchName.trim(),branchNorm,inputModeForBranch(branchName));addedBranches++;
             }
           }
         }
@@ -144,7 +148,7 @@ export function hospitalSettingsService(sql,out){
         if(!getDepartment(b.id))throw bad('القسم الرئيسي غير موجود');if(sql.prepare('SELECT 1 FROM hospital_department_links WHERE department_id=? LIMIT 1').get(b.id))throw conflict('أزل ارتباط القسم من المستشفيات أولًا');if(sql.prepare('SELECT 1 FROM hospital_branch_catalog WHERE department_id=? LIMIT 1').get(b.id))throw conflict('احذف فروع القسم أولًا');sql.prepare('DELETE FROM hospital_department_catalog WHERE id=?').run(b.id);return {saved:true};
       }
       if(b.action==='branch.save'){
-        if(!getDepartment(b.departmentId))throw bad('القسم الرئيسي غير موجود');if(!validName(b.name))throw bad('أدخل اسم فرع صالحًا');const id=b.id||'branch-'+randomUUID();const dupe=sql.prepare('SELECT id FROM hospital_branch_catalog WHERE department_id=? AND norm=? AND id<>?').get(b.departmentId,norm(b.name),id);if(dupe)throw conflict('الفرع موجود تحت هذا القسم');if(b.id&&!getBranch(b.id))throw bad('الفرع غير موجود');if(b.id)sql.prepare('UPDATE hospital_branch_catalog SET name=?,norm=? WHERE id=?').run(b.name.trim(),norm(b.name),id);else sql.prepare('INSERT INTO hospital_branch_catalog VALUES(?,?,?,?)').run(id,b.departmentId,b.name.trim(),norm(b.name));return {saved:true,id};
+        if(!getDepartment(b.departmentId))throw bad('القسم الرئيسي غير موجود');if(!validName(b.name))throw bad('أدخل اسم فرع صالحًا');const id=b.id||'branch-'+randomUUID();const dupe=sql.prepare('SELECT id FROM hospital_branch_catalog WHERE department_id=? AND norm=? AND id<>?').get(b.departmentId,norm(b.name),id);if(dupe)throw conflict('الفرع موجود تحت هذا القسم');if(b.id&&!getBranch(b.id))throw bad('الفرع غير موجود');if(b.id)sql.prepare('UPDATE hospital_branch_catalog SET name=?,norm=?,input_mode=? WHERE id=?').run(b.name.trim(),norm(b.name),inputModeForBranch(b.name),id);else sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run(id,b.departmentId,b.name.trim(),norm(b.name),inputModeForBranch(b.name));return {saved:true,id};
       }
       if(b.action==='branch.delete'){if(!getBranch(b.id))throw bad('الفرع غير موجود');sql.prepare('DELETE FROM hospital_branch_catalog WHERE id=?').run(b.id);return {saved:true}}
       throw bad('الإجراء غير معروف');
@@ -161,8 +165,8 @@ export function hospitalActivityService(sql,out){
   const fieldsFor=(hospitalId,typeId)=>{
     const departments=sql.prepare('SELECT d.id,d.name,d.description,l.age_gender_breakdown FROM hospital_department_links l JOIN hospital_department_catalog d ON d.id=l.department_id WHERE l.hospital_id=? AND l.service_type_id=? ORDER BY l.sort_order,d.name').all(hospitalId,typeId);
     return departments.map(department=>{
-      const branches=sql.prepare('SELECT id,name FROM hospital_branch_catalog WHERE department_id=? ORDER BY name').all(department.id);
-      return {...department,fields:(branches.length?branches.map(branch=>({key:'b:'+branch.id,branchId:branch.id,label:branch.name})): [{key:'d:'+department.id,branchId:null,label:'عدد الحالات'}]).map(field=>({...field,ageGenderBreakdown:!!department.age_gender_breakdown}))};
+      const allBranches=sql.prepare('SELECT id,name,input_mode FROM hospital_branch_catalog WHERE department_id=? ORDER BY name').all(department.id);
+      return {...department,fields:(allBranches.length?allBranches.map(branch=>({key:'b:'+branch.id,branchId:branch.id,label:branch.name,inputMode:branch.input_mode||inputModeForBranch(branch.name)})): [{key:'d:'+department.id,branchId:null,label:'عدد الحالات',inputMode:'age_gender'}])};
     });
   };
   const canWrite=(user,hospitalId)=>user?.role==='admin'||user?.role==='entry'&&user.scope==='hospital'&&user.facility===hospitalId;
@@ -202,11 +206,11 @@ export function hospitalActivityService(sql,out){
       const values={};
       for(const field of fields){
         const value=body.values[field.key];
-        if(field.ageGenderBreakdown){
+        if(field.inputMode==='age_gender'||field.inputMode==='gender'){
           if(value==null||value===''){values[field.key]={breakdown:null,total:null};continue}
           if(Number.isSafeInteger(value)&&value>=0){values[field.key]={breakdown:null,total:value};continue}
-          if(!value||typeof value!=='object'||Array.isArray(value))return out({error:'أدخل تفصيل العمر والجنس لكل تخصص'},400);
-          const keys=['male_under18','female_under18','male_18_65','female_18_65','male_over65','female_over65'];if(Object.keys(value).some(key=>!keys.includes(key)))return out({error:'تفصيل العمر والجنس غير صالح'},400);
+          if(!value||typeof value!=='object'||Array.isArray(value))return out({error:'أدخل تفاصيل الجنس والعمر المطلوبة لكل فرع'},400);
+          const keys=field.inputMode==='gender'?['male','female']:['male_under18','female_under18','male_18_65','female_18_65','male_over65','female_over65'];if(Object.keys(value).some(key=>!keys.includes(key)))return out({error:'تفاصيل الجنس والعمر غير صالحة'},400);
           const detail={};for(const key of keys){const part=value[key];if(part==null||part===''){detail[key]=null;continue}if(!Number.isSafeInteger(part)||part<0)return out({error:'القيم يجب أن تكون أعدادًا صحيحة غير سالبة'},400);detail[key]=part}
           const supplied=Object.values(detail).some(part=>part!==null);values[field.key]={breakdown:supplied?detail:null,total:supplied?Object.values(detail).reduce((sum,part)=>sum+(part??0),0):null};continue
         }
@@ -215,7 +219,7 @@ export function hospitalActivityService(sql,out){
         values[field.key]={breakdown:null,total:value};
       }
       if(!Object.values(values).some(value=>value.total!==null))return out({error:'أدخل قيمة واحدة على الأقل'},400);
-      const entries=definitions.flatMap(department=>department.fields.map(field=>({key:field.key,departmentId:department.id,departmentName:department.name,branchId:field.branchId,label:field.label,inputMode:field.ageGenderBreakdown?'age_gender':'total',value:values[field.key].total,breakdown:values[field.key].breakdown})));
+      const entries=definitions.flatMap(department=>department.fields.map(field=>({key:field.key,departmentId:department.id,departmentName:department.name,branchId:field.branchId,label:field.label,inputMode:field.inputMode,value:values[field.key].total,breakdown:values[field.key].breakdown})));
       if(typeof body.notes!=='string'||body.notes.length>3000)return out({error:'الملاحظات أطول من المسموح'},400);
       const existing=sql.prepare('SELECT * FROM hospital_activity_records WHERE hospital_id=? AND service_type_id=? AND date=?').get(body.hospital,body.serviceTypeId,body.date);
       if(body.id){
