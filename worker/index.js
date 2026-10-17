@@ -26,11 +26,133 @@ const id=old?.id||'ems:manual:'+b.region+':'+b.kind+':'+b.date,end=b.kind==='mon
 if(b.kind==='daily'){if(monthly)ops.push(emsDelta(d,b.region,month.start,v,old?JSON.parse(old.values_json):{},stamp));else ops.push(d.query("INSERT INTO ems_records (id,region,date,period_end,kind,values_json,source_id,source_sheet,source_row,updated_at) VALUES (?,?,?,?, 'monthly',?,'manual','ملخص تلقائي',0,?) ON CONFLICT(region,date,kind) DO UPDATE SET values_json=excluded.values_json,deleted=0,source_id='manual',source_sheet='ملخص تلقائي',source_row=0,updated_at=excluded.updated_at",'ems:monthly:'+b.region+':'+month.start,b.region,month.start,month.end,JSON.stringify(v),stamp))}await d.batch(ops);return json({saved:true,id})}
 function emsDelta(d,region,date,values,previous,stamp){const params=[];const pairs=seed.ems.metrics.map(m=>{params.push((values[m.key]||0)-(previous[m.key]||0));return "'$."+m.key+"',MAX(0,COALESCE(json_extract(values_json,'$."+m.key+"'),0)+?)"});return d.query("UPDATE ems_records SET values_json=json_set(values_json,"+pairs.join(',')+"),updated_at=? WHERE region=? AND date=? AND kind='monthly' AND deleted=0",...params,stamp,region,date)}
 
-async function phcMutation(request,d){const b=await request.json(),old=b.id?await d.query('SELECT * FROM phc_records WHERE id=? AND deleted=0',b.id).first():null;if(b.id&&!old)return json({error:'السجل غير موجود أو تم حذفه'},404);const stamp=new Date().toISOString();
-if(b.action==='delete'){if(!old)return json({error:'اختر سجلًا للحذف'},400);const ops=[d.query('UPDATE phc_records SET deleted=1,updated_at=? WHERE id=?',stamp,old.id)];if(old.kind==='monthly')ops.push(d.query("UPDATE phc_records SET deleted=1,updated_at=? WHERE clinic_id=? AND kind='daily' AND date>=? AND date<=?",stamp,old.clinic_id,old.date,old.period_end));if(old.kind==='daily'){const m=emsMonth(old.date);ops.push(d.query("UPDATE phc_records SET total=MAX(0,COALESCE(total,0)-?),updated_at=? WHERE clinic_id=? AND date=? AND kind='monthly' AND deleted=0",old.total||0,stamp,old.clinic_id,m.start))}await d.batch(ops);return json({deleted:true})}
-if(!(await d.query('SELECT id FROM phc_clinics WHERE id=?',b.clinic).first())||!validateDate(b.date)||b.date>new Date().toISOString().slice(0,10)||!['daily','monthly','historical'].includes(b.kind)||(!old&&b.kind==='historical'))return json({error:'اختر العيادة ونوع الإحصائية وتاريخًا صحيحًا غير مستقبلي'},400);if(!Number.isSafeInteger(b.total)||b.total<0)return json({error:'أدخل عددًا صحيحًا غير سالب'},400);const m=emsMonth(b.date);if(b.kind==='monthly'&&b.date!==m.start)return json({error:'اختر الشهر الصحيح'},400);if(old&&(old.clinic_id!==b.clinic||old.date!==b.date||old.kind!==b.kind))return json({error:'لا يمكن تغيير العيادة أو الفترة أثناء التعديل'},400);
-const duplicate=await d.query('SELECT id FROM phc_records WHERE clinic_id=? AND date=? AND kind=? AND deleted=0',b.clinic,b.date,b.kind).first();if(duplicate&&!old)return json({error:'يوجد سجل لهذه العيادة والفترة؛ افتح السجل لتعديله'},409);const historical=await d.query("SELECT id FROM phc_records WHERE clinic_id=? AND kind='historical' AND date<=? AND period_end>=? AND deleted=0",b.clinic,b.kind==='monthly'?m.end:b.date,b.date).first();if(historical&&!old)return json({error:'الفترة مغطاة بملخص تاريخي. عدّل الملخص أو احذفه قبل إدخال تفاصيلها'},409);const monthly=await d.query("SELECT * FROM phc_records WHERE clinic_id=? AND date=? AND kind='monthly' AND deleted=0",b.clinic,m.start).first(),daily=await d.query("SELECT id FROM phc_records WHERE clinic_id=? AND kind='daily' AND date>=? AND date<=? AND deleted=0",b.clinic,m.start,m.end).first();if(!old&&b.kind==='daily'&&monthly&&!daily&&monthly.source_sheet!=='ملخص تلقائي')return json({error:'الشهر مسجل كملخص فقط؛ عدّل الملخص أو احذفه قبل إدخال التفاصيل'},409);if(!old&&b.kind==='monthly'&&daily)return json({error:'الملخص الشهري يُحدّث تلقائيًا من التفاصيل اليومية'},409);
-const id=old?.id||'phc:manual:'+b.clinic+':'+b.kind+':'+b.date,notes=String(b.notes||'').slice(0,3000),ops=[];if(old)ops.push(d.query('UPDATE phc_records SET total=?,notes=?,updated_at=? WHERE id=?',b.total,notes,stamp,id));else ops.push(d.query("INSERT INTO phc_records (id,clinic_id,date,period_end,kind,total,source_id,source_sheet,deleted,notes,updated_at) VALUES (?,?,?,?,?,?,'manual','إدخال يدوي',0,?,?) ON CONFLICT(clinic_id,date,kind) DO UPDATE SET total=excluded.total,deleted=0,source_id='manual',source_sheet='إدخال يدوي',notes=excluded.notes,updated_at=excluded.updated_at",id,b.clinic,b.date,b.kind==='monthly'?m.end:b.date,b.kind,b.total,notes,stamp));if(b.kind==='daily'){if(monthly)ops.push(d.query("UPDATE phc_records SET total=MAX(0,COALESCE(total,0)+?),updated_at=? WHERE id=?",b.total-(old?.total||0),stamp,monthly.id));else ops.push(d.query("INSERT INTO phc_records (id,clinic_id,date,period_end,kind,total,source_id,source_sheet,updated_at) VALUES (?,?,?,?,'monthly',?,'manual','ملخص تلقائي',?) ON CONFLICT(clinic_id,date,kind) DO UPDATE SET total=excluded.total,deleted=0,source_id='manual',source_sheet='ملخص تلقائي',updated_at=excluded.updated_at",'phc:monthly:'+b.clinic+':'+m.start,b.clinic,m.start,m.end,b.total,stamp))}await d.batch(ops);return json({saved:true,id})}
+const PHC_GROUPS=[
+ {key:'medical',label:'الطب العام'},
+ {key:'conditions',label:'تصنيفات الحالات والخدمات'},
+ {key:'nursing',label:'التمريض'},
+ {key:'vaccine',label:'التطعيم'},
+ {key:'child_nutrition',label:'تغذية الأطفال من 6 أشهر إلى 5 سنوات'},
+ {key:'plw_nutrition',label:'تغذية الحوامل والمرضعات'},
+ {key:'clinic_summary',label:'إجمالي العيادة'}
+];
+const PHC_DEFAULT_METRICS=[
+ ['medical','medical_male_0_18','ذكور 0–18',0],['medical','medical_female_0_18','إناث 0–18',0],
+ ['medical','medical_male_18_60','ذكور 18–60',0],['medical','medical_female_18_60','إناث 18–60',0],
+ ['medical','medical_male_band3','ذكور، الفئة الثالثة (Male <60 في الملف)',0],['medical','medical_female_band3','إناث، الفئة الثالثة (Female <60 في الملف)',0],
+ ['medical','medical_total','إجمالي الطب العام',1],
+ ['conditions','disabilities','أشخاص ذوو إعاقة',0],['conditions','skin','أمراض جلدية',0],
+ ['conditions','respiratory','أمراض تنفسية',0],['conditions','gastroenteritis','التهاب المعدة والأمعاء',0],
+ ['conditions','hav','التهاب الكبد A (HAV)',0],['conditions','chronic','أمراض مزمنة',0],
+ ['conditions','ent','أنف وأذن وحنجرة',0],['conditions','orthopedic','عظام',0],
+ ['conditions','ophthalmology','عيون',0],['conditions','neurology','أعصاب',0],
+ ['conditions','gynecology_obstetrics','نساء وولادة',0],['conditions','urology','مسالك بولية',0],
+ ['conditions','ultrasound','أشعة (ألتراساوند)',0],['conditions','conditions_other','أخرى',0],
+ ['nursing','nursing_male_0_18','ذكور 0–18',0],['nursing','nursing_female_0_18','إناث 0–18',0],
+ ['nursing','nursing_male_18_60','ذكور 18–60',0],['nursing','nursing_female_18_60','إناث 18–60',0],
+ ['nursing','nursing_male_band3','ذكور، الفئة الثالثة (Male <60 في الملف)',0],['nursing','nursing_female_band3','إناث، الفئة الثالثة (Female <60 في الملف)',0],
+ ['nursing','nursing_total','إجمالي التمريض',1],
+ ['vaccine','vaccine_total','عدد المطاعيم',0],
+ ['child_nutrition','child_normal_muac','MUAC طبيعي للأطفال',0],['child_nutrition','child_sam','حالات SAM للأطفال',0],
+ ['child_nutrition','child_mam','حالات MAM للأطفال',0],
+ ['plw_nutrition','plw_normal_muac','MUAC طبيعي للحوامل والمرضعات',0],['plw_nutrition','plw_sam','حالات SAM للحوامل والمرضعات',0],
+ ['plw_nutrition','plw_mam','حالات MAM للحوامل والمرضعات',0],
+ ['child_nutrition','nutrition_total','إجمالي التغذية (مجموع فئات الأطفال والحوامل والمرضعات)',1],
+ ['clinic_summary','clinic_total','إجمالي الحالات بالعيادة',0]
+];
+async function phcSettingsHandler(request,d){
+ const defaults=PHC_DEFAULT_METRICS.map((m,i)=>d.query('INSERT OR IGNORE INTO phc_metrics (key,group_key,label,order_no,enabled,derived) VALUES (?,?,?,?,1,?)',m[1],m[0],m[2],i,m[3]));
+ if(defaults.length)await d.batch(defaults);
+ if(request.method==='GET'){
+  const metrics=(await d.query('SELECT * FROM phc_metrics ORDER BY order_no,key').all()).results;
+  return json({groups:PHC_GROUPS,metrics});
+ }
+ if(request.method!=='POST')return json({error:'الطريقة غير مدعومة'},405);
+ const b=await request.json();
+ if(b.action==='save'){
+  const old=await d.query('SELECT * FROM phc_metrics WHERE key=?',b.key).first();
+  if(!old)return json({error:'حقل الإحصائية غير موجود'},404);
+  const label=typeof b.label==='string'?b.label.trim():'';
+  if(!label||label.length>120)return json({error:'أدخل اسمًا صحيحًا للحقل (حتى 120 حرفًا)'},400);
+  const enabled=old.derived?1:(b.enabled===false?0:1);
+  await d.query('UPDATE phc_metrics SET label=?,enabled=? WHERE key=?',label,enabled,b.key).run();
+ }else if(b.action==='add'){
+  const group=PHC_GROUPS.find(g=>g.key===b.group_key),label=typeof b.label==='string'?b.label.trim():'';
+  if(!group||!label||label.length>120)return json({error:'اختر مجموعة وأدخل اسمًا صحيحًا للحقل'},400);
+  const key='custom_'+crypto.randomUUID().replaceAll('-','');
+  const order=await d.query('SELECT COALESCE(MAX(order_no),0)+1 value FROM phc_metrics WHERE group_key=?',group.key).first();
+  await d.query('INSERT INTO phc_metrics (key,group_key,label,order_no,enabled,derived) VALUES (?,?,?,?,1,0)',key,group.key,label,order.value).run();
+ }else return json({error:'إجراء الإعدادات غير معروف'},400);
+ return json({saved:true});
+}
+async function phcCleanDetails(raw,old,d){
+ if(raw==null)return old?.details_json||null;
+ if(typeof raw!=='object'||Array.isArray(raw))throw new Error('تفاصيل الإحصائية غير صحيحة');
+ const metrics=(await d.query('SELECT key,enabled,derived FROM phc_metrics').all()).results,known=new Set(metrics.map(m=>m.key));
+ for(const key of Object.keys(raw))if(!known.has(key))throw new Error('يوجد حقل إحصائي غير معروف');
+ const details=old?.details_json?JSON.parse(old.details_json):{};
+ for(const metric of metrics){
+  if(!metric.enabled||metric.derived)continue;
+  if(!Object.prototype.hasOwnProperty.call(raw,metric.key)){if(!old)details[metric.key]=null;continue}
+  const value=raw[metric.key];
+  if(value==null||value===''){details[metric.key]=null;continue}
+  if(!Number.isSafeInteger(value)||value<0)throw new Error('أدخل أعدادًا صحيحة غير سالبة في تفاصيل الإحصائية');
+  details[metric.key]=value;
+ }
+ const nutritionKeys=['child_normal_muac','child_sam','child_mam','plw_normal_muac','plw_sam','plw_mam'];
+ if(nutritionKeys.some(k=>details[k]!=null))details.nutrition_total=nutritionKeys.reduce((n,k)=>n+(details[k]||0),0);
+ else details.nutrition_total=null;
+ for(const [total,keys] of [['medical_total',['medical_male_0_18','medical_female_0_18','medical_male_18_60','medical_female_18_60','medical_male_band3','medical_female_band3']],['nursing_total',['nursing_male_0_18','nursing_female_0_18','nursing_male_18_60','nursing_female_18_60','nursing_male_band3','nursing_female_band3']]])details[total]=keys.some(k=>details[k]!=null)?keys.reduce((n,k)=>n+(details[k]||0),0):null;
+ return Object.keys(details).some(k=>details[k]!=null)?JSON.stringify(details):null;
+}
+async function phcRecomputeMonth(d,clinic,date,stamp){
+ const m=emsMonth(date),rows=(await d.query("SELECT total,details_json FROM phc_records WHERE clinic_id=? AND kind='daily' AND date>=? AND date<=? AND deleted=0",clinic,m.start,m.end).all()).results;
+ const total=rows.reduce((n,r)=>n+(r.total||0),0),details={};let hasDetails=false;
+ for(const row of rows)if(row.details_json){hasDetails=true;const values=JSON.parse(row.details_json);for(const [key,value] of Object.entries(values))if(value!=null)details[key]=(details[key]||0)+value}
+ const monthly=await d.query("SELECT id,source_sheet FROM phc_records WHERE clinic_id=? AND date=? AND kind='monthly' AND deleted=0",clinic,m.start).first();
+ if(monthly&&monthly.source_sheet!=='ملخص تلقائي')return;
+ if(monthly)await d.query('UPDATE phc_records SET total=?,details_json=?,updated_at=? WHERE id=?',total,hasDetails?JSON.stringify(details):null,stamp,monthly.id).run();
+ else await d.query("INSERT INTO phc_records (id,clinic_id,date,period_end,kind,total,details_json,source_id,source_sheet,deleted,updated_at) VALUES (?,?,?,?,'monthly',?,?,'manual','ملخص تلقائي',0,?) ON CONFLICT(clinic_id,date,kind) DO UPDATE SET total=excluded.total,details_json=excluded.details_json,deleted=0,source_sheet='ملخص تلقائي',updated_at=excluded.updated_at",'phc:monthly:'+clinic+':'+m.start,clinic,m.start,m.end,total,hasDetails?JSON.stringify(details):null,stamp).run();
+}
+
+async function phcMutation(request,d){
+ const b=await request.json(),old=b.id?await d.query('SELECT * FROM phc_records WHERE id=? AND deleted=0',b.id).first():null;
+ if(b.id&&!old)return json({error:'السجل غير موجود أو تم حذفه'},404);
+ const stamp=new Date().toISOString();
+ if(b.action==='delete'){
+  if(!old)return json({error:'اختر سجلًا للحذف'},400);
+  const ops=[d.query('UPDATE phc_records SET deleted=1,updated_at=? WHERE id=?',stamp,old.id)];
+  if(old.kind==='monthly')ops.push(d.query("UPDATE phc_records SET deleted=1,updated_at=? WHERE clinic_id=? AND kind='daily' AND date>=? AND date<=?",stamp,old.clinic_id,old.date,old.period_end));
+  await d.batch(ops);
+  if(old.kind==='daily')await phcRecomputeMonth(d,old.clinic_id,old.date,stamp);
+  return json({deleted:true});
+ }
+ if(!(await d.query('SELECT id FROM phc_clinics WHERE id=?',b.clinic).first())||!validateDate(b.date)||b.date>new Date().toISOString().slice(0,10)||!['daily','monthly','historical'].includes(b.kind)||(!old&&b.kind==='historical'))return json({error:'اختر العيادة ونوع الإحصائية وتاريخًا صحيحًا غير مستقبلي'},400);
+ const hasDetails=b.details&&typeof b.details==='object'&&!Array.isArray(b.details);
+ if(!hasDetails&&(!Number.isSafeInteger(b.total)||b.total<0))return json({error:'أدخل عددًا صحيحًا غير سالب'},400);
+ const m=emsMonth(b.date);
+ if(b.kind==='monthly'&&b.date!==m.start)return json({error:'اختر الشهر الصحيح'},400);
+ if(old&&(old.clinic_id!==b.clinic||old.date!==b.date||old.kind!==b.kind))return json({error:'لا يمكن تغيير العيادة أو الفترة أثناء التعديل'},400);
+ const duplicate=await d.query('SELECT id FROM phc_records WHERE clinic_id=? AND date=? AND kind=? AND deleted=0',b.clinic,b.date,b.kind).first();
+ if(duplicate&&!old)return json({error:'يوجد سجل لهذه العيادة والفترة؛ افتح السجل لتعديله'},409);
+ const historical=await d.query("SELECT id FROM phc_records WHERE clinic_id=? AND kind='historical' AND date<=? AND period_end>=? AND deleted=0",b.clinic,b.kind==='monthly'?m.end:b.date,b.date).first();
+ if(historical&&!old)return json({error:'الفترة مغطاة بملخص تاريخي. عدّل الملخص أو احذفه قبل إدخال تفاصيلها'},409);
+ const monthly=await d.query("SELECT * FROM phc_records WHERE clinic_id=? AND date=? AND kind='monthly' AND deleted=0",b.clinic,m.start).first();
+ const daily=await d.query("SELECT id FROM phc_records WHERE clinic_id=? AND kind='daily' AND date>=? AND date<=? AND deleted=0",b.clinic,m.start,m.end).first();
+ if(!old&&b.kind==='daily'&&monthly&&!daily&&monthly.source_sheet!=='ملخص تلقائي')return json({error:'الشهر مسجل كملخص فقط؛ عدّل الملخص أو احذفه قبل إدخال التفاصيل'},409);
+ if(!old&&b.kind==='monthly'&&daily)return json({error:'الملخص الشهري يُحدّث تلقائيًا من التفاصيل اليومية'},409);
+ let detailsJson=old?.details_json||null,total=b.total;
+ if(hasDetails){
+  try{detailsJson=await phcCleanDetails(b.details,old,d)}catch(e){return json({error:e.message},400)}
+  const details=detailsJson?JSON.parse(detailsJson):{};
+  total=details.clinic_total??null;
+ }
+ if(total!=null&&(!Number.isSafeInteger(total)||total<0))return json({error:'أدخل إجماليًا صحيحًا غير سالب'},400);
+ const id=old?.id||'phc:manual:'+b.clinic+':'+b.kind+':'+b.date,notes=String(b.notes||'').slice(0,3000);
+ if(old)await d.query('UPDATE phc_records SET total=?,details_json=?,notes=?,updated_at=? WHERE id=?',total,detailsJson,notes,stamp,id).run();
+ else await d.query("INSERT INTO phc_records (id,clinic_id,date,period_end,kind,total,details_json,source_id,source_sheet,deleted,notes,updated_at) VALUES (?,?,?,?,?,?,?,'manual','إدخال يدوي',0,?,?) ON CONFLICT(clinic_id,date,kind) DO UPDATE SET total=excluded.total,details_json=excluded.details_json,deleted=0,source_id='manual',source_sheet='إدخال يدوي',notes=excluded.notes,updated_at=excluded.updated_at",id,b.clinic,b.date,b.kind==='monthly'?m.end:b.date,b.kind,total,detailsJson,notes,stamp).run();
+ if(b.kind==='daily')await phcRecomputeMonth(d,b.clinic,b.date,stamp);
+ return json({saved:true,id});
+}
 
 function clinicView(c){return {...c,services:JSON.parse(c.services_json||'[]'),services_json:undefined}}
 async function clinicMutation(request,d){const b=await request.json();const name=typeof b.name==='string'?b.name.trim():'',region=typeof b.region==='string'?b.region.trim():'';if(!name||name.length>160||!['شمال غزة','غزة','الوسطى','خانيونس','رفح'].includes(region))return json({error:'أدخل اسم العيادة واختر المحافظة'},400);const fields={};for(const [k,max] of [['address',600],['code',40]]){if(b[k]!=null&&typeof b[k]!=='string')return json({error:'بيانات غير صحيحة'},400);fields[k]=String(b[k]||'').trim();if(fields[k].length>max)return json({error:'النص المدخل أطول من الحد المسموح'},400)}if(b.start&&!validateDate(b.start))return json({error:'تاريخ تفعيل العيادة غير صحيح'},400);if(!Array.isArray(b.services)||b.services.length>30)return json({error:'يمكن إدخال 30 خدمة كحد أقصى'},400);const services=[];for(const s of b.services){if(!s||typeof s!=='object'||Array.isArray(s))return json({error:'بيانات الخدمة غير صحيحة'},400);const clean={};for(const [k,max]of [['name',160],['scope',600],['scheduleNote',600]]){if(s[k]!=null&&typeof s[k]!=='string')return json({error:'بيانات الخدمة غير صحيحة'},400);clean[k]=String(s[k]||'').trim();if(clean[k].length>max)return json({error:'تفاصيل الخدمة أطول من الحد المسموح'},400)}if(!clean.name)return json({error:'أدخل اسم كل خدمة أو احذف صف الخدمة الفارغ'},400);if(!Array.isArray(s.days)||s.days.some(day=>!Number.isInteger(day)||day<0||day>6))return json({error:'أيام الخدمة غير صحيحة'},400);clean.days=[...new Set(s.days)].sort();for(const k of ['from','to']){clean[k]=s[k]||'';if(typeof clean[k]!=='string'||(clean[k]&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(clean[k])))return json({error:'وقت الخدمة غير صحيح'},400)}if(!!clean.from!==!!clean.to||(clean.from&&clean.to<=clean.from))return json({error:'أدخل وقت بداية ونهاية صحيحين؛ نهاية الخدمة بعد بدايتها'},400);services.push(clean)}const old=b.id?await d.query('SELECT id FROM phc_clinics WHERE id=?',b.id).first():null;if(b.id&&!old)return json({error:'العيادة غير موجودة'},404);const duplicate=await d.query('SELECT id FROM phc_clinics WHERE name=? AND region=? AND id!=?',name,region,b.id||'').first();if(duplicate)return json({error:'توجد عيادة بهذا الاسم في المحافظة المختارة'},409);const id=old?.id||'phc-'+crypto.randomUUID(),stamp=new Date().toISOString();if(old)await d.query('UPDATE phc_clinics SET name=?,region=?,code=?,start=?,address=?,services_json=?,updated_at=? WHERE id=?',name,region,fields.code,b.start||null,fields.address,JSON.stringify(services),stamp,id).run();else await d.query('INSERT INTO phc_clinics (id,name,region,code,start,address,services_json,updated_at) VALUES (?,?,?,?,?,?,?,?)',id,name,region,fields.code,b.start||null,fields.address,JSON.stringify(services),stamp).run();return json({saved:true,id})}
@@ -42,7 +164,8 @@ if(url.pathname==='/api/phc-status')return json({progress:await d.query('SELECT 
 if(url.pathname==='/api/status')return json({progress:await d.query('SELECT * FROM import_progress WHERE id=?',seed.version).first()});
 const ready=await d.query('SELECT done FROM import_progress WHERE id=?',seed.version).first();if(!ready?.done)return json({error:'استيراد البيانات لم يكتمل بعد'},503);
 if(url.pathname==='/api/health-summary'&&request.method==='GET'){const [hospital,phc,ems,phcReady]=await Promise.all([d.query("SELECT COALESCE(SUM(json_extract(values_json,'$.B')),0) total,COUNT(DISTINCT hospital_id) facilities FROM hospital_records").first(),d.query("SELECT COALESCE(SUM(total),0) total FROM phc_records WHERE deleted=0 AND kind IN ('monthly','historical')").first(),d.query("SELECT COALESCE(SUM(json_extract(values_json,'$.total')),0) total,COUNT(DISTINCT region) regions FROM ems_records WHERE deleted=0 AND kind='monthly'").first(),d.query('SELECT done FROM import_progress WHERE id=?','phc-import-2026-10-05-v1').first()]);const clinics=await d.query('SELECT COUNT(*) count FROM phc_clinics').first();return json({hospital,phc:phcReady?.done?{...phc,facilities:clinics.count}:null,ems})}
-if(url.pathname==='/api/phc-report'||url.pathname==='/api/phc-records'||url.pathname==='/api/phc-clinics'){const p=await d.query('SELECT done FROM import_progress WHERE id=?','phc-import-2026-10-05-v1').first();if(!p?.done)return json({error:'استيراد الرعاية الأولية لم يكتمل بعد'},503);if(url.pathname==='/api/phc-clinics'&&request.method==='POST')return clinicMutation(request,d);if(url.pathname==='/api/phc-records'&&request.method==='POST')return phcMutation(request,d);if(request.method==='GET')return json({clinics:(await d.query('SELECT * FROM phc_clinics ORDER BY region,name').all()).results.map(clinicView),records:(await d.query('SELECT * FROM phc_records WHERE deleted=0 ORDER BY date DESC,clinic_id').all()).results,source:seed.phc.source.name,cumulative:seed.phc.cumulative,issues:seed.phc.issues,lastDaily:seed.phc.lastDaily})}
+if(url.pathname==='/api/phc-settings'&&(request.method==='GET'||request.method==='POST'))return phcSettingsHandler(request,d);
+if(url.pathname==='/api/phc-report'||url.pathname==='/api/phc-records'||url.pathname==='/api/phc-clinics'){const p=await d.query('SELECT done FROM import_progress WHERE id=?','phc-import-2026-10-05-v1').first();if(!p?.done)return json({error:'استيراد الرعاية الأولية لم يكتمل بعد'},503);if(url.pathname==='/api/phc-clinics'&&request.method==='POST')return clinicMutation(request,d);if(url.pathname==='/api/phc-records'&&request.method==='POST')return phcMutation(request,d);if(request.method==='GET')return json({clinics:(await d.query('SELECT * FROM phc_clinics ORDER BY region,name').all()).results.map(clinicView),records:(await d.query('SELECT * FROM phc_records WHERE deleted=0 ORDER BY date DESC,clinic_id').all()).results.map(r=>({...r,details:r.details_json?JSON.parse(r.details_json):null,details_json:undefined})),source:seed.phc.source.name,cumulative:seed.phc.cumulative,issues:seed.phc.issues,lastDaily:seed.phc.lastDaily})}
 if(url.pathname==='/api/ems-records'&&request.method==='POST')return emsMutation(request,d);
 if(url.pathname==='/api/ems-report'&&request.method==='GET'){const rows=(await d.query('SELECT * FROM ems_records WHERE deleted=0 ORDER BY date DESC,region').all()).results.map(r=>({...r,values:JSON.parse(r.values_json),values_json:undefined}));return json({records:rows,metrics:seed.ems.metrics,regions:seed.ems.regions,snapshots:seed.ems.snapshots,issues:seed.ems.issues,source:seed.ems.source.name})}
 if(url.pathname==='/api/config')return json({hospitals:(await d.query('SELECT * FROM hospitals ORDER BY name').all()).results,metrics:(await d.query('SELECT * FROM metrics').all()).results,sources:(await d.query('SELECT id,name FROM import_sources').all()).results});
