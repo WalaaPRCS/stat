@@ -3,6 +3,7 @@ import {waterService} from './water.mjs';
 import {awarenessService} from './awareness.mjs';
 import {kitchenService} from './kitchens.mjs';
 import {reliefService} from './relief.mjs';
+import {disasterServiceRecords} from './disaster-service-records.mjs';
 import {gzipSync} from 'node:zlib';
 import http from 'node:http';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {DatabaseSync} from 'node:sqlite';import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';import worker from '../worker/index.js';
 const hash=t=>createHash('sha256').update(t).digest('hex'),passwordHash=p=>{const salt=randomBytes(16).toString('hex');return salt+':'+scryptSync(p,salt,64).toString('hex')},verify=(p,h)=>{try{const [s,v]=h.split(':');return timingSafeEqual(scryptSync(p,s,64),Buffer.from(v,'hex'))}catch{return false}},out=(v,status=200,headers={})=>new Response(JSON.stringify(v),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
@@ -11,7 +12,7 @@ const sql=new DatabaseSync(filename);sql.exec('PRAGMA foreign_keys=ON; PRAGMA jo
 sql.exec(`CREATE TABLE IF NOT EXISTS app_users(id TEXT PRIMARY KEY,name TEXT NOT NULL,username TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,role TEXT NOT NULL,scope TEXT,facility TEXT,active INTEGER NOT NULL DEFAULT 1);CREATE TABLE IF NOT EXISTS app_sessions(token_hash TEXT PRIMARY KEY,user_id TEXT REFERENCES app_users(id),expires INTEGER NOT NULL);CREATE TABLE IF NOT EXISTS ems_centers(id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE,region TEXT NOT NULL);`);
 sql.exec('CREATE TABLE IF NOT EXISTS disaster_reports(date TEXT PRIMARY KEY,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL)');
 sql.exec('CREATE TABLE IF NOT EXISTS ems_integrated_records(id TEXT PRIMARY KEY,region TEXT NOT NULL,date TEXT NOT NULL,period_end TEXT NOT NULL,kind TEXT NOT NULL,values_json TEXT NOT NULL,notes TEXT NOT NULL DEFAULT \'\',updated_at TEXT NOT NULL,UNIQUE(region,date,kind));CREATE INDEX IF NOT EXISTS ems_integrated_by_period ON ems_integrated_records(kind,date,region);CREATE TABLE IF NOT EXISTS ems_integration_status(id TEXT PRIMARY KEY,sync_from TEXT,last_synced_at TEXT,status TEXT NOT NULL,record_count INTEGER NOT NULL DEFAULT 0,error TEXT)');
-const handleRelief=reliefService(sql,out);const handleKitchens=kitchenService(sql,out);const handleAwareness=awarenessService(sql,out);const handleWater=waterService(sql,out);const handleHospitalSettings=hospitalSettingsService(sql,out);const handleHospitalActivity=hospitalActivityService(sql,out);
+const handleRelief=reliefService(sql,out);const handleKitchens=kitchenService(sql,out);const handleAwareness=awarenessService(sql,out);const handleWater=waterService(sql,out);const handleHospitalSettings=hospitalSettingsService(sql,out);const handleHospitalActivity=hospitalActivityService(sql,out);const handleDisasterServiceRecords=disasterServiceRecords(sql,out);
 const DB={prepare(query){return {params:[],bind(...params){this.params=params;return this},async run(){sql.prepare(query).run(...this.params);return {success:true}},async first(){return sql.prepare(query).get(...this.params)||null},async all(){return {results:sql.prepare(query).all(...this.params)}}}},async batch(stmts){sql.exec('BEGIN');try{const v=[];for(const s of stmts)v.push(await s.run());sql.exec('COMMIT');return v}catch(e){sql.exec('ROLLBACK');throw e}}};
 for(const endpoint of ['import-source','phc-import']){let p;do{const res=await worker.fetch(new Request(origin+'/api/'+endpoint,{method:'POST',headers:{'X-PRCS-Action':'1'},body:'{}'}),{DB});if(!res.ok)throw Error('Initialization failed: '+await res.text());p=await res.json()}while(!p.done)}
 const publicUser=u=>u?{id:u.id,name:u.name,username:u.username,role:u.role,scope:u.scope,facility:u.facility,active:u.active}:null;
@@ -74,6 +75,7 @@ if(p==='/api/system-import'&&req.method==='POST'){if(u?.role!=='admin')return ou
 if(p==='/api/ems-sync'){if(u?.role!=='admin')return out({error:'المزامنة متاحة لمدير النظام فقط'},403);if(req.method==='GET')return out(integrationStatus());if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);return out(await syncEMS())}
 if(p==='/api/hospital-settings')return handleHospitalSettings(req,u);
 if(p==='/api/hospital-activity-records')return handleHospitalActivity(req,u);
+if(p==='/api/disaster-service-records')return handleDisasterServiceRecords(req,u);
 if(p==='/api/water-operations'||p==='/api/water-import')return handleWater(req,u);
 if(p==='/api/awareness-activities'||p==='/api/awareness-import')return handleAwareness(req,u);
 if(p==='/api/kitchen-operations')return handleKitchens(req,u);
