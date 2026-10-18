@@ -40,28 +40,38 @@ const PHC_DEFAULT_METRICS=[
  ['medical','medical_male_18_60','ذكور 18–60',0],['medical','medical_female_18_60','إناث 18–60',0],
  ['medical','medical_male_band3','ذكور، الفئة الثالثة (Male <60 في الملف)',0],['medical','medical_female_band3','إناث، الفئة الثالثة (Female <60 في الملف)',0],
  ['medical','medical_total','إجمالي الطب العام',1],
- ['conditions','disabilities','أشخاص ذوو إعاقة',0],['conditions','skin','أمراض جلدية',0],
- ['conditions','respiratory','أمراض تنفسية',0],['conditions','gastroenteritis','التهاب المعدة والأمعاء',0],
- ['conditions','hav','التهاب الكبد A (HAV)',0],['conditions','chronic','أمراض مزمنة',0],
- ['conditions','ent','أنف وأذن وحنجرة',0],['conditions','orthopedic','عظام',0],
- ['conditions','ophthalmology','عيون',0],['conditions','neurology','أعصاب',0],
- ['conditions','gynecology_obstetrics','نساء وولادة',0],['conditions','urology','مسالك بولية',0],
- ['conditions','ultrasound','أشعة (ألتراساوند)',0],['conditions','conditions_other','أخرى',0],
+ ['conditions','disabilities','أشخاص ذوو إعاقة',1],['conditions','skin','أمراض جلدية',1],
+ ['conditions','respiratory','أمراض تنفسية',1],['conditions','gastroenteritis','التهاب المعدة والأمعاء',1],
+ ['conditions','hav','التهاب الكبد A (HAV)',1],['conditions','chronic','أمراض مزمنة',1],
+ ['conditions','ent','أنف وأذن وحنجرة',1],['conditions','orthopedic','عظام',1],
+ ['conditions','ophthalmology','عيون',1],['conditions','neurology','أعصاب',1],
+ ['conditions','gynecology_obstetrics','نساء وولادة',1],['conditions','urology','مسالك بولية',1],
+ ['conditions','ultrasound','أشعة (ألتراساوند)',1],['conditions','conditions_other','أخرى',1],
  ['nursing','nursing_male_0_18','ذكور 0–18',0],['nursing','nursing_female_0_18','إناث 0–18',0],
  ['nursing','nursing_male_18_60','ذكور 18–60',0],['nursing','nursing_female_18_60','إناث 18–60',0],
  ['nursing','nursing_male_band3','ذكور، الفئة الثالثة (Male <60 في الملف)',0],['nursing','nursing_female_band3','إناث، الفئة الثالثة (Female <60 في الملف)',0],
  ['nursing','nursing_total','إجمالي التمريض',1],
- ['vaccine','vaccine_total','عدد المطاعيم',0],
- ['child_nutrition','child_normal_muac','MUAC طبيعي للأطفال',0],['child_nutrition','child_sam','حالات SAM للأطفال',0],
- ['child_nutrition','child_mam','حالات MAM للأطفال',0],
- ['plw_nutrition','plw_normal_muac','MUAC طبيعي للحوامل والمرضعات',0],['plw_nutrition','plw_sam','حالات SAM للحوامل والمرضعات',0],
- ['plw_nutrition','plw_mam','حالات MAM للحوامل والمرضعات',0],
+ ['vaccine','vaccine_total','إجمالي المطاعيم',1],
+ ['child_nutrition','child_normal_muac','MUAC طبيعي للأطفال',1],['child_nutrition','child_sam','حالات SAM للأطفال',1],
+ ['child_nutrition','child_mam','حالات MAM للأطفال',1],
+ ['plw_nutrition','plw_normal_muac','MUAC طبيعي للحوامل والمرضعات',1],['plw_nutrition','plw_sam','حالات SAM للحوامل والمرضعات',1],
+ ['plw_nutrition','plw_mam','حالات MAM للحوامل والمرضعات',1],
  ['child_nutrition','nutrition_total','إجمالي التغذية (مجموع فئات الأطفال والحوامل والمرضعات)',1],
  ['clinic_summary','clinic_total','إجمالي الحالات بالعيادة',0]
 ];
+const PHC_DERIVED_FIELDS={};
+const PHC_AGE_BANDS=[['0_18','0–18 سنة'],['18_60','18–60 سنة'],['band3','الفئة الثالثة (<60 في المصدر)']];
+for(const [group,key,label] of [...PHC_DEFAULT_METRICS]){
+ if(group==='conditions'&&['disabilities','skin','respiratory','gastroenteritis','hav','chronic','ent','orthopedic','ophthalmology','neurology','gynecology_obstetrics','urology','ultrasound','conditions_other'].includes(key)){
+  const children=[];for(const [band]of PHC_AGE_BANDS)for(const sex of ['male','female']){const child=key+'_'+sex+'_'+band;children.push(child);PHC_DEFAULT_METRICS.push(['conditions',child,label+' · '+(sex==='male'?'ذكور':'إناث')+' · '+PHC_AGE_BANDS.find(x=>x[0]===band)[1],0])}PHC_DERIVED_FIELDS[key]=children;
+ }
+ if(group==='child_nutrition'&&['child_normal_muac','child_sam','child_mam'].includes(key)){const children=['male','female'].map(sex=>key+'_'+sex);PHC_DERIVED_FIELDS[key]=children;for(const sex of ['male','female'])PHC_DEFAULT_METRICS.push([group,key+'_'+sex,label+' · '+(sex==='male'?'ذكور':'إناث'),0])}
+ if(group==='plw_nutrition'&&['plw_normal_muac','plw_sam','plw_mam'].includes(key)){const children=[key+'_under18',key+'_over18'];PHC_DERIVED_FIELDS[key]=children;PHC_DEFAULT_METRICS.push([group,children[0],label+' · أقل من 18 سنة',0],[group,children[1],label+' · 18 سنة فأكثر',0])}
+}
+PHC_DERIVED_FIELDS.vaccine_total=['vaccine_male','vaccine_female'];PHC_DEFAULT_METRICS.push(['vaccine','vaccine_male','مطاعيم · ذكور',0],['vaccine','vaccine_female','مطاعيم · إناث',0]);
 async function phcSettingsHandler(request,d){
- const defaults=PHC_DEFAULT_METRICS.map((m,i)=>d.query('INSERT OR IGNORE INTO phc_metrics (key,group_key,label,order_no,enabled,derived) VALUES (?,?,?,?,1,?)',m[1],m[0],m[2],i,m[3]));
- if(defaults.length)await d.batch(defaults);
+ const values=PHC_DEFAULT_METRICS.flatMap((m,i)=>[m[1],m[0],m[2],i,m[3]]),slots=PHC_DEFAULT_METRICS.map(()=>'(?,?,?,?,1,?)').join(',');
+ if(values.length)await d.query('INSERT OR IGNORE INTO phc_metrics (key,group_key,label,order_no,enabled,derived) VALUES '+slots,...values).run();
  if(request.method==='GET'){
   const metrics=(await d.query('SELECT * FROM phc_metrics ORDER BY order_no,key').all()).results;
   return json({groups:PHC_GROUPS,metrics});
@@ -98,10 +108,17 @@ async function phcCleanDetails(raw,old,d){
   if(!Number.isSafeInteger(value)||value<0)throw new Error('أدخل أعدادًا صحيحة غير سالبة في تفاصيل الإحصائية');
   details[metric.key]=value;
  }
- const nutritionKeys=['child_normal_muac','child_sam','child_mam','plw_normal_muac','plw_sam','plw_mam'];
- if(nutritionKeys.some(k=>details[k]!=null))details.nutrition_total=nutritionKeys.reduce((n,k)=>n+(details[k]||0),0);
- else details.nutrition_total=null;
- for(const [total,keys] of [['medical_total',['medical_male_0_18','medical_female_0_18','medical_male_18_60','medical_female_18_60','medical_male_band3','medical_female_band3']],['nursing_total',['nursing_male_0_18','nursing_female_0_18','nursing_male_18_60','nursing_female_18_60','nursing_male_band3','nursing_female_band3']]])details[total]=keys.some(k=>details[k]!=null)?keys.reduce((n,k)=>n+(details[k]||0),0):null;
+ for(const [total,keys] of Object.entries(PHC_DERIVED_FIELDS)){
+  const entered=keys.some(k=>details[k]!=null);
+  if(entered)details[total]=keys.reduce((n,k)=>n+(details[k]||0),0);
+  else if(!old)details[total]=null;
+ }
+ for(const total of ['medical_total','nursing_total']){
+  const prefix=total==='medical_total'?'medical':'nursing',keys=PHC_AGE_BANDS.flatMap(([band])=>['male','female'].map(sex=>prefix+'_'+sex+'_'+band)),entered=keys.some(k=>details[k]!=null);
+  if(entered)details[total]=keys.reduce((n,k)=>n+(details[k]||0),0);else if(!old)details[total]=null;
+ }
+ const nutritionKeys=['child_normal_muac','child_sam','child_mam','plw_normal_muac','plw_sam','plw_mam'],nutritionEntered=nutritionKeys.some(k=>details[k]!=null);
+ if(nutritionEntered)details.nutrition_total=nutritionKeys.reduce((n,k)=>n+(details[k]||0),0);else if(!old)details.nutrition_total=null;
  return Object.keys(details).some(k=>details[k]!=null)?JSON.stringify(details):null;
 }
 async function phcRecomputeMonth(d,clinic,date,stamp){
