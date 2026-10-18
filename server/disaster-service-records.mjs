@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 const regions=['شمال غزة','غزة','الوسطى','خانيونس','رفح'];
 const healthGroups=['المجتمعات','مراكز إيواء الجمعية','تجمعات النزوح'];
 const sanitationTypes=['إدارة النفايات الصلبة','الصرف الصحي','تنظيف وتعقيم المرافق','توفير مرافق النظافة','التوعية بالنظافة والإصحاح','أخرى'];
-const validDate=v=>typeof v==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
+const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
 export function disasterServiceRecords(sql,out){
  sql.exec('CREATE TABLE IF NOT EXISTS disaster_service_records(id TEXT PRIMARY KEY,service TEXT NOT NULL,date TEXT NOT NULL,region TEXT NOT NULL,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL);CREATE INDEX IF NOT EXISTS disaster_service_by_date ON disaster_service_records(service,date,region)');
  return async(req,u)=>{
