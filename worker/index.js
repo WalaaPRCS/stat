@@ -57,7 +57,7 @@ const PHC_DEFAULT_METRICS=[
  ['plw_nutrition','plw_normal_muac','MUAC طبيعي للحوامل والمرضعات',1],['plw_nutrition','plw_sam','حالات SAM للحوامل والمرضعات',1],
  ['plw_nutrition','plw_mam','حالات MAM للحوامل والمرضعات',1],
  ['child_nutrition','nutrition_total','إجمالي التغذية (مجموع فئات الأطفال والحوامل والمرضعات)',1],
- ['clinic_summary','clinic_total','إجمالي الحالات بالعيادة',0]
+ ['clinic_summary','clinic_total','إجمالي الحالات بالعيادة',1]
 ];
 const PHC_DERIVED_FIELDS={};
 const PHC_AGE_BANDS=[['0_18','0–18 سنة'],['18_60','18–60 سنة'],['band3','الفئة الثالثة (<60 في المصدر)']];
@@ -119,6 +119,12 @@ async function phcCleanDetails(raw,old,d){
  }
  const nutritionKeys=['child_normal_muac','child_sam','child_mam','plw_normal_muac','plw_sam','plw_mam'],nutritionEntered=nutritionKeys.some(k=>details[k]!=null);
  if(nutritionEntered)details.nutrition_total=nutritionKeys.reduce((n,k)=>n+(details[k]||0),0);else if(!old)details.nutrition_total=null;
+ // The clinic grand total is a server-derived value. Sum the group totals so
+ // that age/sex breakdowns and their row totals are never counted twice.
+ const clinicParts=['medical_total','nursing_total',...Object.keys(PHC_DERIVED_FIELDS).filter(k=>['disabilities','skin','respiratory','gastroenteritis','hav','chronic','ent','orthopedic','ophthalmology','neurology','gynecology_obstetrics','urology','ultrasound','conditions_other'].includes(k)),'vaccine_total','nutrition_total',...metrics.filter(m=>m.enabled&&!m.derived&&m.key.startsWith('custom_')).map(m=>m.key)];
+ const clinicEntered=clinicParts.some(k=>details[k]!=null);
+ if(clinicEntered)details.clinic_total=clinicParts.reduce((n,k)=>n+(details[k]||0),0);
+ else if(!old)details.clinic_total=null;
  return Object.keys(details).some(k=>details[k]!=null)?JSON.stringify(details):null;
 }
 async function phcRecomputeMonth(d,clinic,date,stamp){
