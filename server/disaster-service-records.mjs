@@ -11,7 +11,7 @@ export function disasterServiceRecords(sql,out){
   if(req.method==='GET')return out(sql.prepare('SELECT id,service,date,region,payload,updated_at FROM disaster_service_records WHERE service=? ORDER BY date DESC,updated_at DESC').all(service).map(r=>({...r,...JSON.parse(r.payload)})));
   if(u?.role!=='admin'&&!(u?.role==='entry'&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية لإدخال بيانات مواجهة الكوارث'},403);
   let b;try{b=await req.json()}catch{return out({error:'بيانات النموذج غير صالحة'},400)}
-  if(req.method==='DELETE'){
+  if(req.method==='DELETE'||req.method==='POST'&&b?.delete===true){
    const key=b.id||id;if(!key)return out({error:'السجل غير محدد'},400);
    sql.prepare('DELETE FROM disaster_service_records WHERE id=? AND service=?').run(key,service);return out({deleted:true});
   }
