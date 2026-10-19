@@ -93,42 +93,42 @@ async function extract(zip) {
   }
   if(!tableSeen.has('cardiac_registry')||!tableSeen.has('entry_and_exit')||!tableSeen.has('pationt_file'))throw Error('ملف SQL لا يحتوي جداول القسطرة والزيارات والمرضى المتوقعة');
   if(!caths.length)throw Error('لم يتم العثور على سجلات قسطرة في الملف');
-  const monthly=new Map(), indications=new Map(), techniques=new Map(), types=new Map(), statuses=new Map(), ages=new Map(), sexes=new Map(), months=new Map();let joined=0,unjoined=0;
-  for(const c of caths){const e=entries.get(c.visit);if(e)joined++;else unjoined++;const p=e?patients.get(e.file):null;const date=c.date||e?.date||'',month=date.slice(0,7)||'غير محدد';const type=e?.type||'غير محدد',status=c.typeStatus,band=ageBand(ageAt(p?.dob,date)),sex=p?.sex||'غير محدد';
-    inc(monthly,packed(month,type,status,band,sex));inc(indications,packed(month,c.indication));inc(types,type);inc(statuses,status);inc(ages,band);inc(sexes,sex);inc(months,month);
-    for(const [key,v] of Object.entries(c.flags))if(['1','true','TRUE'].includes(String(v)))inc(techniques,packed(month,key));
+  const daily=new Map(), indications=new Map(), techniques=new Map(), types=new Map(), statuses=new Map(), ages=new Map(), sexes=new Map(), dates=new Map();let joined=0,unjoined=0;
+  for(const c of caths){const e=entries.get(c.visit);if(e)joined++;else unjoined++;const p=e?patients.get(e.file):null;const date=c.date||e?.date||'غير محدد';const type=e?.type||'غير محدد',status=c.typeStatus,band=ageBand(ageAt(p?.dob,date)),sex=p?.sex||'غير محدد';
+    inc(daily,packed(date,type,status,band,sex));inc(indications,packed(date,c.indication));inc(types,type);inc(statuses,status);inc(ages,band);inc(sexes,sex);inc(dates,date);
+    for(const [key,v] of Object.entries(c.flags))if(['1','true','TRUE'].includes(String(v)))inc(techniques,packed(date,key));
   }
   const mapRows=(map,keys)=>[...map].map(([k,count])=>({...Object.fromEntries(keys.map((x,i)=>[x,JSON.parse(k)[i]])),count}));
-  return {name,sourceDate:(name.match(/(20\d{6})/)||[])[1]||'',total:caths.length,joined,unjoined,monthly:mapRows(monthly,['month','procedure_type','status','age_band','sex_code']),indications:mapRows(indications,['month','indication']),techniques:mapRows(techniques,['month','technique']),types:[...types].map(([label,count])=>({label,count})),statuses:[...statuses].map(([label,count])=>({label,count})),ages:[...ages].map(([label,count])=>({label,count})),sexes:[...sexes].map(([label,count])=>({label,count})),months:[...months].map(([label,count])=>({label,count})).sort((a,b)=>a.label.localeCompare(b.label))};
+  return {name,sourceDate:(name.match(/(20\d{6})/)||[])[1]||'',total:caths.length,joined,unjoined,daily:mapRows(daily,['date','procedure_type','status','age_band','sex_code']),indications:mapRows(indications,['date','indication']),techniques:mapRows(techniques,['date','technique']),types:[...types].map(([label,count])=>({label,count})),statuses:[...statuses].map(([label,count])=>({label,count})),ages:[...ages].map(([label,count])=>({label,count})),sexes:[...sexes].map(([label,count])=>({label,count})),dates:[...dates].map(([label,count])=>({label,count})).sort((a,b)=>a.label.localeCompare(b.label))};
 }
 export function cardiacCathService(sql,out){
-  sql.exec(`CREATE TABLE IF NOT EXISTS cardiac_cath_monthly(month TEXT NOT NULL,procedure_type TEXT NOT NULL,status TEXT NOT NULL,age_band TEXT NOT NULL,sex_code TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(month,procedure_type,status,age_band,sex_code));CREATE TABLE IF NOT EXISTS cardiac_cath_indications(month TEXT NOT NULL,indication TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(month,indication));CREATE TABLE IF NOT EXISTS cardiac_cath_techniques(month TEXT NOT NULL,technique TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(month,technique));CREATE TABLE IF NOT EXISTS cardiac_cath_imports(id TEXT PRIMARY KEY,filename TEXT NOT NULL,source_date TEXT NOT NULL,file_hash TEXT NOT NULL UNIQUE,imported_at TEXT NOT NULL,total INTEGER NOT NULL,joined INTEGER NOT NULL,unjoined INTEGER NOT NULL);`);
+  sql.exec(`CREATE TABLE IF NOT EXISTS cardiac_cath_daily(date TEXT NOT NULL,procedure_type TEXT NOT NULL,status TEXT NOT NULL,age_band TEXT NOT NULL,sex_code TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,procedure_type,status,age_band,sex_code));CREATE TABLE IF NOT EXISTS cardiac_cath_daily_indications(date TEXT NOT NULL,indication TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,indication));CREATE TABLE IF NOT EXISTS cardiac_cath_daily_techniques(date TEXT NOT NULL,technique TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,technique));CREATE TABLE IF NOT EXISTS cardiac_cath_imports(id TEXT PRIMARY KEY,filename TEXT NOT NULL,source_date TEXT NOT NULL,file_hash TEXT NOT NULL UNIQUE,imported_at TEXT NOT NULL,total INTEGER NOT NULL,joined INTEGER NOT NULL,unjoined INTEGER NOT NULL);`);
   const pending=new Map();
   return async function handleCardiacCath(req,u){
     const p=new URL(req.url).pathname;
     if(p==='/api/cardiac-cath-summary'&&req.method==='GET'){
-      const monthly=sql.prepare('SELECT month,procedure_type,status,age_band,sex_code,count FROM cardiac_cath_monthly ORDER BY month DESC,procedure_type').all();
-      const indications=sql.prepare('SELECT month,indication,count FROM cardiac_cath_indications ORDER BY month DESC,count DESC').all();
-      const techniques=sql.prepare('SELECT month,technique,count FROM cardiac_cath_techniques ORDER BY month DESC,technique').all();
+      const daily=sql.prepare('SELECT date,procedure_type,status,age_band,sex_code,count FROM cardiac_cath_daily ORDER BY date DESC,procedure_type').all();
+      const indications=sql.prepare('SELECT date,indication,count FROM cardiac_cath_daily_indications ORDER BY date DESC,count DESC').all();
+      const techniques=sql.prepare('SELECT date,technique,count FROM cardiac_cath_daily_techniques ORDER BY date DESC,technique').all();
       const imports=sql.prepare('SELECT id,filename,source_date,imported_at,total,joined,unjoined FROM cardiac_cath_imports ORDER BY imported_at DESC LIMIT 20').all();
-      const total=monthly.reduce((n,r)=>n+Number(r.count),0), by=(key)=>{const m=new Map();for(const r of monthly)m.set(r[key],(m.get(r[key])||0)+Number(r.count));return [...m].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count)};
-      return out({total,monthly,indications,techniques,byType:by('procedure_type'),byStatus:by('status'),byAge:by('age_band'),bySex:by('sex_code'),imports});
+      const total=daily.reduce((n,r)=>n+Number(r.count),0), by=(key)=>{const m=new Map();for(const r of daily)m.set(r[key],(m.get(r[key])||0)+Number(r.count));return [...m].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count)};
+      return out({total,daily,indications,techniques,byType:by('procedure_type'),byStatus:by('status'),byAge:by('age_band'),bySex:by('sex_code'),imports});
     }
     if(p==='/api/cardiac-cath-preview'&&req.method==='POST'){
       if(u?.role!=='admin')return out({error:'استيراد ملف القسطرة متاح لمدير النظام فقط'},403);
       try{const form=await req.formData(),file=form.get('file');if(!file||typeof file.arrayBuffer!=='function')return out({error:'اختر ملف ZIP أولًا'},400);if(file.size<1||file.size>80*1024*1024)return out({error:'حجم الملف يجب ألا يتجاوز 80 ميجابايت'},413);if(!file.name.toLowerCase().endsWith('.zip'))return out({error:'ارفع نسخة ZIP من قاعدة البيانات'},400);
-        const zip=Buffer.from(await file.arrayBuffer()),digest=createHash('sha256').update(zip).digest('hex'),duplicate=sql.prepare('SELECT imported_at,total FROM cardiac_cath_imports WHERE file_hash=?').get(digest),data=await extract(zip);const token=randomBytes(24).toString('base64url');pending.set(token,{digest,data,duplicate,created:Date.now()});for(const [k,v] of pending)if(Date.now()-v.created>15*60*1000)pending.delete(k);
+        const zip=Buffer.from(await file.arrayBuffer()),digest=createHash('sha256').update(zip).digest('hex'),existingImport=sql.prepare('SELECT imported_at,total FROM cardiac_cath_imports WHERE file_hash=?').get(digest),hasDaily=Number(sql.prepare('SELECT COUNT(*) AS n FROM cardiac_cath_daily').get().n)>0,duplicate=hasDaily?existingImport:null,data=await extract(zip);const token=randomBytes(24).toString('base64url');pending.set(token,{digest,data,duplicate,created:Date.now()});for(const [k,v] of pending)if(Date.now()-v.created>15*60*1000)pending.delete(k);
         return out({token,duplicate:!!duplicate,previousImport:duplicate?.imported_at||null,...data});
       }catch(e){return out({error:e.message||'تعذر قراءة الملف'},400)}
     }
     if(p==='/api/cardiac-cath-commit'&&req.method==='POST'){
       if(u?.role!=='admin')return out({error:'اعتماد الاستيراد متاح لمدير النظام فقط'},403);
       try{const b=await req.json(),item=pending.get(b.token);if(!item)return out({error:'انتهت صلاحية المعاينة. ارفع الملف مجددًا'},400);pending.delete(b.token);if(item.duplicate)return out({imported:false,duplicate:true,total:item.data.total});const d=item.data,stamp=new Date().toISOString();sql.exec('BEGIN IMMEDIATE');try{
-          sql.exec('DELETE FROM cardiac_cath_monthly;DELETE FROM cardiac_cath_indications;DELETE FROM cardiac_cath_techniques;');
-          const monthStmt=sql.prepare('INSERT INTO cardiac_cath_monthly(month,procedure_type,status,age_band,sex_code,count) VALUES(?,?,?,?,?,?)');for(const r of d.monthly)monthStmt.run(r.month,r.procedure_type,r.status,r.age_band,r.sex_code,r.count);
-          const indicationStmt=sql.prepare('INSERT INTO cardiac_cath_indications(month,indication,count) VALUES(?,?,?)');for(const r of d.indications)indicationStmt.run(r.month,r.indication,r.count);
-          const techniqueStmt=sql.prepare('INSERT INTO cardiac_cath_techniques(month,technique,count) VALUES(?,?,?)');for(const r of d.techniques)techniqueStmt.run(r.month,r.technique,r.count);
-          sql.prepare('INSERT INTO cardiac_cath_imports(id,filename,source_date,file_hash,imported_at,total,joined,unjoined) VALUES(?,?,?,?,?,?,?,?)').run(randomBytes(12).toString('hex'),d.name,d.sourceDate,item.digest,stamp,d.total,d.joined,d.unjoined);sql.exec('COMMIT');
+          sql.exec('DELETE FROM cardiac_cath_daily;DELETE FROM cardiac_cath_daily_indications;DELETE FROM cardiac_cath_daily_techniques;');
+          const dateStmt=sql.prepare('INSERT INTO cardiac_cath_daily(date,procedure_type,status,age_band,sex_code,count) VALUES(?,?,?,?,?,?)');for(const r of d.daily)dateStmt.run(r.date,r.procedure_type,r.status,r.age_band,r.sex_code,r.count);
+          const indicationStmt=sql.prepare('INSERT INTO cardiac_cath_daily_indications(date,indication,count) VALUES(?,?,?)');for(const r of d.indications)indicationStmt.run(r.date,r.indication,r.count);
+          const techniqueStmt=sql.prepare('INSERT INTO cardiac_cath_daily_techniques(date,technique,count) VALUES(?,?,?)');for(const r of d.techniques)techniqueStmt.run(r.date,r.technique,r.count);
+          sql.prepare('INSERT INTO cardiac_cath_imports(id,filename,source_date,file_hash,imported_at,total,joined,unjoined) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(file_hash) DO UPDATE SET filename=excluded.filename,source_date=excluded.source_date,imported_at=excluded.imported_at,total=excluded.total,joined=excluded.joined,unjoined=excluded.unjoined').run(randomBytes(12).toString('hex'),d.name,d.sourceDate,item.digest,stamp,d.total,d.joined,d.unjoined);sql.exec('COMMIT');
         }catch(e){sql.exec('ROLLBACK');throw e}return out({imported:true,total:d.total,joined:d.joined,unjoined:d.unjoined,importedAt:stamp});
       }catch(e){return out({error:e.message||'تعذر اعتماد الإحصائيات'},400)}
     }
