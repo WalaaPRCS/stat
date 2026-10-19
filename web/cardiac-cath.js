@@ -1,39 +1,41 @@
 'use strict';
 const cathPreviousRender=render;
 nav.push(['cardiac-cath','القسطرة القلبية','hospital']);
-const CathUI={data:null,busy:false,preview:null,date:'all',error:'',page:1,pageSize:10,detailDate:null};
+const CathUI={data:null,busy:false,preview:null,date:'all',error:'',page:1,pageSize:10,detailDate:null,visibleColumns:(()=>{try{const v=JSON.parse(localStorage.getItem('prcs-cath-visible-columns')||'null');return Array.isArray(v)?new Set(v):null}catch{return null}})()};
 const cathLabels={primary:'قسطرة أولية',rescue:'قسطرة إنقاذية',pharmaco_invasive:'تداخل دوائي',elective:'اختيارية (حسب مؤشر المصدر)',balloon:'بالون',direct_stent:'دعامة مباشرة',balloon_stent:'بالون ودعامة'};
 const cathNum=n=>Number(n||0).toLocaleString('en-US');
 function cathGroup(rows,key,date){const m=new Map();for(const r of rows){if(date!=='all'&&r.date!==date)continue;m.set(r[key],(m.get(r[key])||0)+Number(r.count))}return [...m].map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count)}
 async function cathGet(){try{CathUI.data=await cathApi('cardiac-cath-summary');CathUI.error=''}catch(e){CathUI.error=e.message}if(location.hash==='#cardiac-cath')cardiacCathPage()}
 async function cathApi(path,body){const r=await fetch('/api/'+path,{cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json','X-PRCS-Action':'1'},body:JSON.stringify(body)}:{})});let d={};try{d=await r.json()}catch{}if(!r.ok)throw Error(d.error||'تعذر تنفيذ الطلب');return d}
 function cathBars(title,rows){const max=Math.max(1,...rows.map(x=>Number(x.count)));return `<section class="panel cath-panel"><div class="panel-head"><h2>${title}</h2></div><div class="panel-body">${rows.length?rows.map(x=>`<div class="cath-bar-row"><span>${esc(x.label)}</span><div class="bar-track"><i style="width:${Math.max(2,Number(x.count)/max*100)}%"></i></div><b>${cathNum(x.count)}</b></div>`).join(''):'<div class="empty cath-empty">لا توجد بيانات بعد</div>'}</div></section>`}
-function cathDailyMatrix(d,selectedDates){
-  const dims=[
-    ['نوع القسطرة','type',(d.daily||[]).map(x=>x.procedure_type)],
-    ['حالة الإجراء','status',(d.daily||[]).map(x=>x.status)],
-    ['الفئة العمرية','age',(d.daily||[]).map(x=>x.age_band)],
-    ['الجنس','sex',(d.daily||[]).map(x=>x.sex_code)],
-    ['دواعي الإجراء','indication',(d.indications||[]).map(x=>x.indication)],
-    ['التقنيات والإجراءات','technique',(d.techniques||[]).map(x=>cathLabels[x.technique]||x.technique)]
-  ].map(([title,key,labels])=>({title,key,labels:[...new Set(labels.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ar'))})).filter(g=>g.labels.length);
-  const byDate=new Map();
+function cathDimensionGroups(d){return [
+  ['نوع القسطرة','type',(d.daily||[]).map(x=>x.procedure_type)],
+  ['حالة الإجراء','status',(d.daily||[]).map(x=>x.status)],
+  ['الفئة العمرية','age',(d.daily||[]).map(x=>x.age_band)],
+  ['الجنس','sex',(d.daily||[]).map(x=>x.sex_code)],
+  ['دواعي الإجراء','indication',(d.indications||[]).map(x=>x.indication)],
+  ['التقنيات والإجراءات','technique',(d.techniques||[]).map(x=>cathLabels[x.technique]||x.technique)]
+].map(([title,key,labels])=>({title,key,labels:[...new Set(labels.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ar'))})).filter(g=>g.labels.length)}
+function cathColumnPicker(d){const groups=cathDimensionGroups(d),selected=CathUI.visibleColumns;return `<details class="cath-column-picker"><summary>الأعمدة الظاهرة</summary><div class="cath-column-menu"><div class="cath-column-menu-head"><b>حدد الأعمدة</b><button type="button" class="btn" id="cath-columns-all">إظهار الكل</button></div>${groups.map(g=>`<fieldset><legend>${esc(g.title)}</legend>${g.labels.map(label=>{const key=JSON.stringify([g.key,label]);return `<label><input type="checkbox" data-cath-column="${encodeURIComponent(key)}" ${!selected||selected.has(key)?'checked':''}><span>${esc(label)}</span></label>`}).join('')}</fieldset>`).join('')}</div></details>`}
+function cathDailyMatrix(d,selectedDate='all',opts={}){
+  const groups=cathDimensionGroups(d).map(g=>({...g,labels:opts.ignoreVisibility||!CathUI.visibleColumns?g.labels:g.labels.filter(label=>CathUI.visibleColumns.has(JSON.stringify([g.key,label])))})).filter(g=>g.labels.length);
+  const pageDates=opts.pageDates?new Set(opts.pageDates):null,byDate=new Map();
+  const allowed=date=>(selectedDate==='all'||date===selectedDate)&&(!pageDates||pageDates.has(date));
   const rowFor=date=>{if(!byDate.has(date))byDate.set(date,{date,total:0,values:new Map()});return byDate.get(date)};
   const add=(date,key,label,count,total=false)=>{const row=rowFor(date),col=JSON.stringify([key,label]);row.values.set(col,(row.values.get(col)||0)+Number(count||0));if(total)row.total+=Number(count||0)};
-  for(const x of d.daily||[]){if(selectedDates!=='all'&&x.date!==selectedDates)continue;add(x.date,'type',x.procedure_type,x.count,true);add(x.date,'status',x.status,x.count);add(x.date,'age',x.age_band,x.count);add(x.date,'sex',x.sex_code,x.count)}
-  for(const x of d.indications||[])if(selectedDates==='all'||x.date===selectedDates)add(x.date,'indication',x.indication,x.count);
-  for(const x of d.techniques||[])if(selectedDates==='all'||x.date===selectedDates)add(x.date,'technique',cathLabels[x.technique]||x.technique,x.count);
+  for(const x of d.daily||[]){if(!allowed(x.date))continue;add(x.date,'type',x.procedure_type,x.count,true);add(x.date,'status',x.status,x.count);add(x.date,'age',x.age_band,x.count);add(x.date,'sex',x.sex_code,x.count)}
+  for(const x of d.indications||[])if(allowed(x.date))add(x.date,'indication',x.indication,x.count);
+  for(const x of d.techniques||[])if(allowed(x.date))add(x.date,'technique',cathLabels[x.technique]||x.technique,x.count);
   const dates=[...byDate.values()].sort((a,b)=>b.date.localeCompare(a.date));
-  return `<div class="table-wrap cath-wide-table"><table><thead><tr><th rowspan="2">التاريخ</th>${dims.map(g=>`<th colspan="${g.labels.length}">${esc(g.title)}</th>`).join('')}<th rowspan="2">المجموع</th></tr><tr>${dims.map(g=>g.labels.map(label=>`<th>${esc(label)}</th>`).join('')).join('')}</tr></thead><tbody>${dates.map(row=>`<tr><td>${esc(row.date)}</td>${dims.map(g=>g.labels.map(label=>`<td>${cathNum(row.values.get(JSON.stringify([g.key,label]))||0)}</td>`).join('')).join('')}<td><b>${cathNum(row.total)}</b></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="table-wrap cath-wide-table"><table><thead><tr><th rowspan="2">التاريخ</th>${groups.map(g=>`<th colspan="${g.labels.length}">${esc(g.title)}</th>`).join('')}<th rowspan="2">المجموع</th></tr><tr>${groups.map(g=>g.labels.map(label=>`<th>${esc(label)}</th>`).join('')).join('')}</tr></thead><tbody>${dates.map(row=>`<tr><td>${opts.dateLinks?`<button type="button" class="cath-date-link" data-cath-date="${esc(row.date)}">${esc(row.date)}</button>`:esc(row.date)}</td>${groups.map(g=>g.labels.map(label=>`<td>${cathNum(row.values.get(JSON.stringify([g.key,label]))||0)}</td>`).join('')).join('')}<td><b>${cathNum(row.total)}</b></td></tr>`).join('')}</tbody></table></div>`;
 }
 function cathDailySummary(d){
   const totals=new Map();for(const x of d.daily||[])totals.set(x.date,(totals.get(x.date)||0)+Number(x.count));
   const all=[...totals].filter(([date])=>CathUI.date==='all'||date===CathUI.date).sort((a,b)=>b[0].localeCompare(a[0]));
   const pageSize=Number(CathUI.pageSize)||10,pageCount=Math.max(1,Math.ceil(all.length/pageSize));CathUI.page=Math.min(Math.max(1,CathUI.page),pageCount);
-  const pageRows=all.slice((CathUI.page-1)*pageSize,CathUI.page*pageSize);
-  const from=all.length?(CathUI.page-1)*pageSize+1:0,to=Math.min(CathUI.page*pageSize,all.length);
+  const pageRows=all.slice((CathUI.page-1)*pageSize,CathUI.page*pageSize),from=all.length?(CathUI.page-1)*pageSize+1:0,to=Math.min(CathUI.page*pageSize,all.length);
   const pager=`<div class="cath-pagination"><label>صفوف بكل صفحة <select id="cath-page-size" class="control"><option value="10" ${pageSize===10?'selected':''}>10</option><option value="25" ${pageSize===25?'selected':''}>25</option><option value="50" ${pageSize===50?'selected':''}>50</option><option value="100" ${pageSize===100?'selected':''}>100</option></select></label><span>عرض ${cathNum(from)}–${cathNum(to)} من ${cathNum(all.length)}</span><div class="cath-page-buttons"><button class="btn" id="cath-page-prev" ${CathUI.page<=1?'disabled':''}>السابق</button><span>صفحة ${CathUI.page} من ${pageCount}</span><button class="btn" id="cath-page-next" ${CathUI.page>=pageCount?'disabled':''}>التالي</button></div></div>`;
-  return `<section class="panel cath-panel section-gap"><div class="panel-head"><h2>ملخص الإحصائيات اليومية</h2><small>اضغط على التاريخ لعرض تفاصيله</small></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>مجموع الإجراءات</th></tr></thead><tbody>${pageRows.map(([date,count])=>`<tr><td><button type="button" class="cath-date-link" data-cath-date="${esc(date)}">${esc(date)}</button></td><td><b>${cathNum(count)}</b></td></tr>`).join('')||'<tr><td colspan="2" class="empty">لا توجد بيانات</td></tr>'}</tbody></table></div>${pager}</section>`;
+  return `<section class="panel cath-panel section-gap"><div class="panel-head"><div><h2>الأرشيف اليومي</h2><small>اختر الأعمدة واضغط على التاريخ لعرض تفاصيل اليوم</small></div>${cathColumnPicker(d)}</div>${cathDailyMatrix(d,'all',{pageDates:pageRows.map(([date])=>date),dateLinks:true})}${!pageRows.length?'<div class="empty cath-empty">لا توجد بيانات</div>':''}${pager}</section>`;
 }
 function cathDateModal(d,date){if(!date)return '';const rowCount=(d.daily||[]).filter(x=>x.date===date).reduce((n,x)=>n+Number(x.count),0);return `<div class="cath-modal-backdrop" id="cath-modal-backdrop"><section class="cath-modal" role="dialog" aria-modal="true" aria-labelledby="cath-modal-title"><div class="cath-modal-head"><div><h2 id="cath-modal-title">تفاصيل الإحصائيات — ${esc(date)}</h2><p>مجموع الإجراءات: <b>${cathNum(rowCount)}</b></p></div><button class="btn" id="cath-modal-close" aria-label="إغلاق">إغلاق</button></div><div class="cath-modal-body">${cathDailyMatrix(d,date)}</div></section></div>`}
 function cathImportHistory(){const rows=CathUI.data?.imports||[];return `<section class="panel cath-panel section-gap"><div class="panel-head"><h2>سجل الملفات المستوردة</h2><small>آخر 20 عملية</small></div>${rows.length?`<div class="table-wrap"><table><thead><tr><th>الملف</th><th>تاريخ النسخة</th><th>عدد السجلات</th><th>تاريخ الاستيراد</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.filename)}</td><td>${esc(x.source_date||'—')}</td><td>${cathNum(x.total)}</td><td>${esc(String(x.imported_at).replace('T',' ').slice(0,16))}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty cath-empty">لم يتم استيراد ملفات بعد</div>'}</section>`}
@@ -55,6 +57,8 @@ ${CathUI.error?`<div class="notice warn">${esc(CathUI.error)}</div>`:''}${d?cath
 const open=document.querySelector('#cath-upload-open');if(open)open.onclick=()=>document.querySelector('#cath-file').click();const form=document.querySelector('#cath-upload-form');if(form)form.onsubmit=async e=>{e.preventDefault();const file=document.querySelector('#cath-file').files[0],button=document.querySelector('#cath-preview-btn'),preview=document.querySelector('#cath-preview');if(!file)return;if(file.size>80*1024*1024){toast('حجم الملف يتجاوز 80 ميجابايت');return}button.disabled=true;button.textContent='جارٍ تحليل الملف…';preview.innerHTML='<div class="cath-progress">جارٍ قراءة النسخة واستخراج الإحصائيات…</div>';CathUI.preview=null;try{const fd=new FormData();fd.append('file',file);const res=await fetch('/api/cardiac-cath-preview',{method:'POST',headers:{'X-PRCS-Action':'1'},body:fd});const data=await res.json();if(!res.ok)throw Error(data.error||'تعذر تحليل الملف');CathUI.preview=data;cathPreviewDraw()}catch(err){preview.innerHTML=`<div class="cath-error">${esc(err.message)}</div>`}finally{button.disabled=false;button.textContent='تحليل الملف'}};
 const date=document.querySelector('#cath-date');if(date)date.onchange=()=>{CathUI.date=date.value;CathUI.page=1;cardiacCathPage()};
 main.querySelectorAll('[data-cath-date]').forEach(el=>el.onclick=()=>{CathUI.detailDate=el.dataset.cathDate;cardiacCathPage()});
+main.querySelectorAll('[data-cath-column]').forEach(el=>el.onchange=()=>{const allKeys=cathDimensionGroups(CathUI.data).flatMap(g=>g.labels.map(label=>JSON.stringify([g.key,label])));if(!CathUI.visibleColumns)CathUI.visibleColumns=new Set(allKeys);const key=decodeURIComponent(el.dataset.cathColumn);if(el.checked)CathUI.visibleColumns.add(key);else CathUI.visibleColumns.delete(key);try{localStorage.setItem('prcs-cath-visible-columns',JSON.stringify([...CathUI.visibleColumns]))}catch{}cardiacCathPage()});
+const allColumns=document.querySelector('#cath-columns-all');if(allColumns)allColumns.onclick=()=>{CathUI.visibleColumns=null;try{localStorage.removeItem('prcs-cath-visible-columns')}catch{}cardiacCathPage()};
 const pageSize=document.querySelector('#cath-page-size');if(pageSize)pageSize.onchange=()=>{CathUI.pageSize=Number(pageSize.value);CathUI.page=1;cardiacCathPage()};
 const prev=document.querySelector('#cath-page-prev');if(prev)prev.onclick=()=>{CathUI.page=Math.max(1,CathUI.page-1);cardiacCathPage()};const next=document.querySelector('#cath-page-next');if(next)next.onclick=()=>{CathUI.page++;cardiacCathPage()};
 const close=document.querySelector('#cath-modal-close');if(close)close.onclick=()=>{CathUI.detailDate=null;cardiacCathPage()};const backdrop=document.querySelector('#cath-modal-backdrop');if(backdrop)backdrop.onclick=e=>{if(e.target===backdrop){CathUI.detailDate=null;cardiacCathPage()}};
