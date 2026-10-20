@@ -18,3 +18,4 @@
 .cath-extra-title{display:block;color:var(--red);font-size:13px;margin-bottom:8px}.cath-extra{background:#fff}
 
 .cath-main-tabs{margin:14px 0 18px}.cath-main-tabs button{min-width:120px}.ops-filters{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px}.ops-filters .field{min-width:0}.ops-search{grid-column:span 2}.ops-charts{margin-bottom:4px}.ops-picker .cath-column-menu{z-index:20}@media(max-width:950px){.ops-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.ops-filters{grid-template-columns:1fr}.ops-search{grid-column:auto}}
+.ops-pivot-table thead tr:first-child th:not(:first-child){background:#fbecee;color:#7f1d2d;border-bottom:1px solid #e7b9c1}.ops-pivot-table thead tr:nth-child(2) th{background:#f7f9fc;color:#475569;font-size:12px}.ops-pivot-table th[rowspan="2"]{vertical-align:middle}
