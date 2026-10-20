@@ -147,7 +147,7 @@ export function cardiacCathService(sql,out){
     }
     if(p==='/api/cardiac-cath-commit'&&req.method==='POST'){
       if(u?.role!=='admin')return out({error:'اعتماد الاستيراد متاح لمدير النظام فقط'},403);
-      try{const b=await req.json(),item=pending.get(b.token);if(!item)return out({error:'انتهت صلاحية المعاينة. ارفع الملف مجددًا'},400);pending.delete(b.token);if(item.duplicate)return out({imported:false,duplicate:true,total:item.data.total});const d=item.data,stamp=new Date().toISOString();sql.exec('BEGIN IMMEDIATE');try{
+      try{const b=await req.json(),item=pending.get(b.token);if(!item)return out({error:'انتهت صلاحية المعاينة. ارفع الملف مجددًا'},400);pending.delete(b.token);const d=item.data,stamp=new Date().toISOString();sql.exec('BEGIN IMMEDIATE');try{
           sql.exec('DELETE FROM cardiac_cath_daily;DELETE FROM cardiac_cath_daily_indications;DELETE FROM cardiac_cath_daily_techniques;DELETE FROM cardiac_operations;');
           const dateStmt=sql.prepare('INSERT INTO cardiac_cath_daily(date,procedure_type,status,age_band,sex_code,count) VALUES(?,?,?,?,?,?)');for(const r of d.daily)dateStmt.run(r.date,r.procedure_type,r.status,r.age_band,r.sex_code,r.count);
           const operationsStmt=sql.prepare('INSERT INTO cardiac_operations(date,department,specialty,category,operation,anesthesia,insurance,sex,age,count) VALUES(?,?,?,?,?,?,?,?,?,?)');for(const r of d.operations?.rows||[])operationsStmt.run(r.date,r.department,r.specialty,r.category,r.operation,r.anesthesia,r.insurance,r.sex,r.age,r.count);
