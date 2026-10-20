@@ -120,10 +120,16 @@ export function cardiacCathService(sql,out){
     }
     if(p==='/api/cardiac-cath-entry'&&req.method==='POST'){
       if(!u||!['admin','entry','custom'].includes(u.role)||(u.role!=='admin'&&u.scope!=='hospital'))return out({error:'لا تملك صلاحية إدخال إحصائيات القسطرة'},403);
-      try{const b=await req.json(),date=safeDate(b.date),procedure_type=norm(b.procedure_type),status=norm(b.status),age_band=norm(b.age_band),sex_code=clean(b.sex_code),count=Number(b.count),indication=clean(b.indication).slice(0,180),allowed=['primary','rescue','pharmaco_invasive','elective','balloon','direct_stent','balloon_stent'],techniques=Array.isArray(b.techniques)?[...new Set(b.techniques.filter(x=>allowed.includes(x)))]:[];
-        if(!date||!['ذكر','أنثى','غير محدد'].includes(sex_code)||!Number.isInteger(count)||count<1||count>1000000)return out({error:'تحقق من التاريخ والجنس والعدد'},400);
-        const id=randomBytes(12).toString('hex');sql.prepare('INSERT INTO cardiac_cath_manual_entries(id,date,procedure_type,status,age_band,sex_code,count,indication,techniques,created_at,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id,date,procedure_type,status,age_band,sex_code==='ذكر'?'1':sex_code==='أنثى'?'2':'غير محدد',count,indication,JSON.stringify(techniques),new Date().toISOString(),u.id);return out({saved:true,id});
-      }catch(e){return out({error:e.message||'تعذر حفظ الإحصائية'},400)}
+      try{
+        const body=await req.json(),date=safeDate(body.date),raw=Array.isArray(body.entries)?body.entries:[body];
+        if(!date||raw.length<1||raw.length>50)return out({error:'أدخل تاريخًا صحيحًا وسجلًا واحدًا على الأقل (حد أقصى 50 سجلًا)'},400);
+        const allowed=['primary','rescue','pharmaco_invasive','elective','balloon','direct_stent','balloon_stent'],ages=['غير محدد','أقل من 18','18–34','35–49','50–64','65 فأكثر'];
+        const rows=raw.map(b=>({procedure_type:norm(b.procedure_type),status:norm(b.status),age_band:clean(b.age_band),sex_code:clean(b.sex_code),count:Number(b.count),indication:clean(b.indication).slice(0,180),techniques:Array.isArray(b.techniques)?[...new Set(b.techniques.filter(x=>allowed.includes(x)))]:[]}));
+        if(rows.some(r=>!['ذكر','أنثى','غير محدد'].includes(r.sex_code)||!ages.includes(r.age_band)||!Number.isInteger(r.count)||r.count<1||r.count>1000000))return out({error:'تحقق من الجنس والفئة العمرية والعدد في جميع السجلات'},400);
+        const insert=sql.prepare('INSERT INTO cardiac_cath_manual_entries(id,date,procedure_type,status,age_band,sex_code,count,indication,techniques,created_at,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?)'),stamp=new Date().toISOString();
+        sql.exec('BEGIN IMMEDIATE');try{for(const r of rows)insert.run(randomBytes(12).toString('hex'),date,r.procedure_type,r.status,r.age_band,r.sex_code==='ذكر'?'1':r.sex_code==='أنثى'?'2':'غير محدد',r.count,r.indication,JSON.stringify(r.techniques),stamp,u.id);sql.exec('COMMIT')}catch(e){sql.exec('ROLLBACK');throw e}
+        return out({saved:true,count:rows.length});
+      }catch(e){return out({error:e.message||'تعذر حفظ الإحصائيات'},400)}
     }
     if(p==='/api/cardiac-cath-preview'&&req.method==='POST'){
       if(u?.role!=='admin')return out({error:'استيراد ملف القسطرة متاح لمدير النظام فقط'},403);
