@@ -5,7 +5,7 @@ const regions=['الوسطى','خانيونس','غزة'];
 const countKeys=['male_0_18','female_0_18','male_19_60','female_19_60','male_60_plus','female_60_plus'];
 const validDate=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(v)&&!Number.isNaN(Date.parse(v+'T00:00:00Z'));
 export function rehabService(sql,out,hasPermission){
- sql.exec('CREATE TABLE IF NOT EXISTS rehab_records(id TEXT PRIMARY KEY,date TEXT NOT NULL,region TEXT NOT NULL,category TEXT NOT NULL,service TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',counts_json TEXT NOT NULL,notes TEXT NOT NULL DEFAULT \'\',updated_by TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(date,region,category,service));CREATE INDEX IF NOT EXISTS rehab_records_date ON rehab_records(date,category,region)');
+ sql.exec('CREATE TABLE IF NOT EXISTS rehab_records(id TEXT PRIMARY KEY,date TEXT NOT NULL,region TEXT NOT NULL,category TEXT NOT NULL,service TEXT NOT NULL,description TEXT NOT NULL DEFAULT \'\',counts_json TEXT NOT NULL,notes TEXT NOT NULL DEFAULT \'\',updated_by TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(date,region,category,service));CREATE INDEX IF NOT EXISTS rehab_records_date ON rehab_records(date,category,region)');
  const columns=sql.prepare('PRAGMA table_info(rehab_records)').all();if(!columns.some(c=>c.name==='description'))sql.exec("ALTER TABLE rehab_records ADD COLUMN description TEXT NOT NULL DEFAULT ''");
  const decode=r=>({...r,counts:JSON.parse(r.counts_json),counts_json:undefined});
  return async(req,u)=>{
