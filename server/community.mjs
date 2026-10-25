@@ -19,6 +19,28 @@ export function communityService(sql,out,hasPermission){
   const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='community';
   if(!allowed)return out({error:'ليس لديك صلاحية إدخال إحصائيات دائرة العمل المجتمعي'},403);
   let b;try{b=await req.json()}catch{return out({error:'بيانات النموذج غير صالحة'},400)}
+  if(url.pathname==='/api/community-import'){
+   if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
+   if(!hasPermission(u,'create'))return out({error:'لا تملك صلاحية استيراد السجلات'},403);
+   const records=Array.isArray(b.records)?b.records:[];
+   if(!records.length||records.length>5000)return out({error:'الملف فارغ أو يحتوي على عدد سجلات غير مسموح به'},400);
+   let added=0,skipped=0,failed=0;const errors=[];
+   sql.exec('BEGIN IMMEDIATE');
+   try{
+    for(let i=0;i<records.length;i++){
+     const row=records[i]||{},period=String(row.period||''),regionValue=String(row.region||''),categoryValue=String(row.category||''),service=String(row.service||''),notes=String(row.notes||'').trim(),counts=row.counts||{};
+     if(!validPeriod(period)||!regions.includes(regionValue)||!Object.hasOwn(services,categoryValue)||!services[categoryValue].includes(service)||notes.length>1500){failed++;if(errors.length<5)errors.push({row:i+1,error:'تحقق من الشهر والمحافظة ومجموعة الخدمة واسم الخدمة'});continue}
+     const clean={};let invalid=false;
+     for(const k of countKeys){const n=Number(counts[k]??0);if(!Number.isSafeInteger(n)||n<0||n>100000000){invalid=true;break}clean[k]=n}
+     if(invalid){failed++;if(errors.length<5)errors.push({row:i+1,error:'أعداد المستفيدين يجب أن تكون أعدادًا صحيحة غير سالبة'});continue}
+     const duplicate=sql.prepare('SELECT id FROM community_records WHERE period=? AND region=? AND category=? AND service=?').get(period,regionValue,categoryValue,service);
+     if(duplicate){skipped++;continue}
+     try{sql.prepare('INSERT INTO community_records(id,period,region,category,service,counts_json,notes,updated_by,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').run(randomUUID(),period,regionValue,categoryValue,service,JSON.stringify(clean),notes,u?.id||'system',new Date().toISOString());added++}
+     catch(e){failed++;if(errors.length<5)errors.push({row:i+1,error:e.message||'تعذر حفظ السجل'})}
+    }
+    sql.exec('COMMIT');return out({added,skipped,failed,total:records.length,errors});
+   }catch(e){sql.exec('ROLLBACK');return out({error:'فشل الاستيراد الجماعي ولم تحفظ التغييرات'},500)}
+  }
   if(req.method==='DELETE'||b?.delete===true){
    if(!hasPermission(u,'delete'))return out({error:'لا تملك صلاحية حذف السجلات'},403);
    const key=b.id||id;if(!key)return out({error:'السجل غير محدد'},400);
