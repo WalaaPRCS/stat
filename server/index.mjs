@@ -75,7 +75,7 @@ const syncEMS=async()=>{
 };
 const attempts=new Map();
 async function handle(req,ip='local'){const url=new URL(req.url),p=url.pathname,u=identity(req),write=!['GET','HEAD'].includes(req.method);if(p==='/health')return out({ok:true});if(write&&(req.headers.get('Origin')!==origin||req.headers.get('X-PRCS-Action')!=='1'))return out({error:'طلب غير مصرح'},403);
-if(write&&['entry','custom'].includes(u?.role)){const scopedWrites={hospital:['/api/records','/api/hospital-activity-records','/api/cardiac-cath-entry','/api/mawasi-records'],phc:['/api/phc-records'],ems:['/api/ems-records'],disaster:['/api/disaster-reports','/api/disaster-service-records','/api/relief-operations','/api/water-operations','/api/awareness-activities','/api/kitchen-operations'],community:['/api/community-records']};if(!scopedWrites[u.scope]?.includes(p))return out({error:'ليست لديك صلاحية إدخال في هذا القسم'},403);let body={};try{body=await req.clone().json()}catch{}const action=req.method==='DELETE'||body.delete===true||body.action==='delete'?'delete':body.overwrite||body.id?'edit':'create';const grant=sql.prepare('SELECT enabled FROM app_user_permissions WHERE user_id=? AND permission_key=?').get(u.id,action);if(grant&&grant.enabled!==1)return out({error:'صلاحية '+({create:'الإضافة',edit:'التعديل',delete:'الحذف'}[action])+' غير مفعلة لهذا المستخدم'},403)}
+if(write&&['entry','custom'].includes(u?.role)){const scopedWrites={hospital:['/api/records','/api/hospital-activity-records','/api/cardiac-cath-entry','/api/mawasi-records'],phc:['/api/phc-records'],ems:['/api/ems-records'],disaster:['/api/disaster-reports','/api/disaster-service-records','/api/relief-operations','/api/water-operations','/api/awareness-activities','/api/kitchen-operations'],community:['/api/community-records','/api/community-import']};if(!scopedWrites[u.scope]?.includes(p))return out({error:'ليست لديك صلاحية إدخال في هذا القسم'},403);let body={};try{body=await req.clone().json()}catch{}const action=req.method==='DELETE'||body.delete===true||body.action==='delete'?'delete':body.overwrite||body.id?'edit':'create';const grant=sql.prepare('SELECT enabled FROM app_user_permissions WHERE user_id=? AND permission_key=?').get(u.id,action);if(grant&&grant.enabled!==1)return out({error:'صلاحية '+({create:'الإضافة',edit:'التعديل',delete:'الحذف'}[action])+' غير مفعلة لهذا المستخدم'},403)}
 if(p.startsWith('/api/cardiac-cath-')){if(p==='/api/cardiac-cath-entry'&&u?.role!=='admin'&&!hasPermission(u,'create'))return out({error:'لا تملك صلاحية إدخال إحصائيات القسطرة'},403);const response=await handleCardiacCath(req,u);if(response)return response}
 if(p.startsWith('/api/mawasi-')){const response=await handleMawasi(req,u);if(response)return response}
 if(p.startsWith('/api/amal-')){const response=await handleAmal(req,u);if(response)return response}
@@ -85,7 +85,7 @@ if(p==='/api/ems-sync'){if(!hasPermission(u,'manage_settings'))return out({error
 if(p==='/api/hospital-settings')return handleHospitalSettings(req,u);
 if(p==='/api/hospital-activity-records')return handleHospitalActivity(req,u);
 if(p==='/api/disaster-service-records')return handleDisasterServiceRecords(req,u);
-if(p==='/api/community-records')return handleCommunity(req,u);
+if(p==='/api/community-records'||p==='/api/community-import')return handleCommunity(req,u);
 if(p==='/api/water-operations'||p==='/api/water-import')return handleWater(req,u);
 if(p==='/api/awareness-activities'||p==='/api/awareness-import')return handleAwareness(req,u);
 if(p==='/api/kitchen-operations')return handleKitchens(req,u);
