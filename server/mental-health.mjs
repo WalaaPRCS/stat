@@ -10,7 +10,7 @@ function cleanRecord(row){
  let periodKey=String(row.period_key||'');
  if(date&&validDate(date))periodKey='date:'+date;
  else if(periodLabel===archiveLabel)periodKey=archiveKey;
- if(!Object.hasOwn(mentalHealthPrograms,mentalHealthPrograms.indexOf(program)))return null;
+ if(!mentalHealthPrograms.includes(program))return null;
  if(!periodKey||!(date?validDate(date):periodLabel===archiveLabel))return null;
  const raw=row.counts||{},counts={};let invalid=false;
  for(const region of regions){counts[region]={};for(const key of countKeys){const n=Number(raw[region]?.[key]??0);if(!Number.isSafeInteger(n)||n<0||n>100000000){invalid=true;break}counts[region][key]=n}if(invalid)break}
