@@ -4,7 +4,7 @@ export const mentalHealthPrograms=['إسعاف نفسي أولي','دعم كبا
 const regions=['شمال غزة','غزة','الوسطى','خانيونس','رفح'];
 const countKeys=['female_0_17','male_0_17','female_18_59','male_18_59','female_60_plus','male_60_plus'];
 const archiveKey='archive:2023-10_2025-05',archiveLabel='Oct.2023-May 2025';
-const validDate=v=>typeof v==='string'&&/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(v)&&!Number.isNaN(Date.parse(v+'T00:00:00Z'));
+const validDate=v=>{if(typeof v!=='string'||!/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(v))return false;const d=new Date(v+'T00:00:00Z');return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===v};
 function cleanRecord(row){
  const date=String(row.date||''),periodLabel=String(row.period_label||''),program=String(row.program||'');
  let periodKey=String(row.period_key||'');
