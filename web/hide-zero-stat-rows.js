@@ -21,7 +21,7 @@
       if(/مجموع|الإجمالي|اجمالي|المجموع|المعدل|متوسط|total|average/.test(label))return;
       if(row.querySelector('input,select,textarea'))return;
       const values=[...row.querySelectorAll('td')].map(isNumericCell).filter(v=>v!==null);
-      if(values.length>=2&&values.every(v=>v===0)){
+      if(values.length>0&&values.every(v=>v===0)){
         row.dataset.zeroStatOriginalHidden=String(row.hidden);
         row.hidden=true;
       }
