@@ -33,7 +33,14 @@ const PHC_GROUPS=[
  {key:'vaccine',label:'التطعيم'},
  {key:'child_nutrition',label:'تغذية الأطفال من 6 أشهر إلى 5 سنوات'},
  {key:'plw_nutrition',label:'تغذية الحوامل والمرضعات'},
- {key:'clinic_summary',label:'إجمالي العيادة'}
+ {key:'clinic_summary',label:'إجمالي العيادة'},
+ {key:'reproductive_health',label:'الصحة الإنجابية'},
+ {key:'pharmacy',label:'خدمات الصيدلية'},
+ {key:'laboratory',label:'خدمات المختبر'},
+ {key:'diagnostics',label:'الخدمات التشخيصية'},
+ {key:'mental_health',label:'الصحة النفسية'},
+ {key:'health_promotion',label:'تعزيز الصحة والتوعية'},
+ {key:'injury_management',label:'إدارة الإصابات'}
 ];
 const PHC_DEFAULT_METRICS=[
  ['medical','medical_male_0_18','ذكور 0–18',0],['medical','medical_female_0_18','إناث 0–18',0],
@@ -69,6 +76,16 @@ for(const [group,key,label] of [...PHC_DEFAULT_METRICS]){
  if(group==='plw_nutrition'&&['plw_normal_muac','plw_sam','plw_mam'].includes(key)){const children=[key+'_under18',key+'_over18'];PHC_DERIVED_FIELDS[key]=children;PHC_DEFAULT_METRICS.push([group,children[0],label+' · أقل من 18 سنة',0],[group,children[1],label+' · 18 سنة فأكثر',0])}
 }
 PHC_DERIVED_FIELDS.vaccine_total=['vaccine_male','vaccine_female'];PHC_DEFAULT_METRICS.push(['vaccine','vaccine_male','مطاعيم · ذكور',0],['vaccine','vaccine_female','مطاعيم · إناث',0]);
+const PHC_SERVICE_METRICS=[
+ ['reproductive_health','antenatal_care','زيارات رعاية ما قبل الولادة'],['reproductive_health','postnatal_care','زيارات رعاية ما بعد الولادة'],['reproductive_health','family_planning_counseling','استشارات تنظيم الأسرة'],['reproductive_health','family_planning_commodities','توفير وسائل تنظيم الأسرة'],
+ ['pharmacy','patients_receiving_medicines','مرضى صُرفت لهم أدوية'],
+ ['laboratory','lab_tests','فحوصات الدم والبول والبراز'],['laboratory','colocated_lab_tests','فحوصات المختبر في المركز الأعلى'],
+ ['diagnostics','ultrasound_tests','فحوصات الألتراساوند'],['diagnostics','glucose_tests','فحوصات سكر الدم'],['diagnostics','hemoglobin_tests','فحوصات الهيموغلوبين'],['diagnostics','cholesterol_tests','فحوصات الكوليسترول'],['diagnostics','ct_scans','فحوصات CT'],['diagnostics','xray_tests','فحوصات الأشعة السينية'],['diagnostics','other_diagnostic_tests','فحوصات تشخيصية أخرى'],
+ ['mental_health','individual_psychological_counseling','جلسات الإرشاد النفسي الفردي'],['mental_health','mhgap_consultations','استشارات mhGAP'],['mental_health','pfa_sessions','خدمات الإسعاف النفسي الأولي PFA'],
+ ['health_promotion','health_education_sessions','أنشطة التثقيف والتوعية الصحية'],
+ ['injury_management','wound_care_cases','حالات العناية بالجروح والخياطة والحروق']
+];
+PHC_DEFAULT_METRICS.push(...PHC_SERVICE_METRICS.map(([group,key,label])=>[group,key,label,0]));
 async function phcSettingsHandler(request,d){
  const values=PHC_DEFAULT_METRICS.flatMap((m,i)=>[m[1],m[0],m[2],i,m[3]]),slots=PHC_DEFAULT_METRICS.map(()=>'(?,?,?,?,1,?)').join(',');
  if(values.length)await d.query('INSERT OR IGNORE INTO phc_metrics (key,group_key,label,order_no,enabled,derived) VALUES '+slots,...values).run();
@@ -121,7 +138,7 @@ async function phcCleanDetails(raw,old,d){
  if(nutritionEntered)details.nutrition_total=nutritionKeys.reduce((n,k)=>n+(details[k]||0),0);else if(!old)details.nutrition_total=null;
  // The clinic grand total is a server-derived value. Sum the group totals so
  // that age/sex breakdowns and their row totals are never counted twice.
- const clinicParts=['medical_total','nursing_total',...Object.keys(PHC_DERIVED_FIELDS).filter(k=>['disabilities','skin','respiratory','gastroenteritis','hav','chronic','ent','orthopedic','ophthalmology','neurology','gynecology_obstetrics','urology','ultrasound','conditions_other'].includes(k)),'vaccine_total','nutrition_total',...metrics.filter(m=>m.enabled&&!m.derived&&m.key.startsWith('custom_')).map(m=>m.key)];
+ const serviceGroups=['reproductive_health','pharmacy','laboratory','diagnostics','mental_health','health_promotion','injury_management'];const clinicParts=['medical_total','nursing_total',...Object.keys(PHC_DERIVED_FIELDS).filter(k=>['disabilities','skin','respiratory','gastroenteritis','hav','chronic','ent','orthopedic','ophthalmology','neurology','gynecology_obstetrics','urology','ultrasound','conditions_other'].includes(k)),'vaccine_total','nutrition_total',...metrics.filter(m=>m.enabled&&!m.derived&&(m.key.startsWith('custom_')||serviceGroups.includes(m.group_key))).map(m=>m.key)];
  const clinicEntered=clinicParts.some(k=>details[k]!=null);
  if(clinicEntered)details.clinic_total=clinicParts.reduce((n,k)=>n+(details[k]||0),0);
  else if(!old)details.clinic_total=null;
