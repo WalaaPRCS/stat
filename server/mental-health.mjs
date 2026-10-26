@@ -34,7 +34,7 @@ export function mentalHealthService(sql,out,hasPermission){
    if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
    if(!hasPermission(u,'create'))return out({error:'لا تملك صلاحية استيراد السجلات'},403);
    const records=Array.isArray(b.records)?b.records:[];
-   if(!records.length||records.length>5000)return out({error:'الملف فارغ أو يحتوي على عدد سجلات غير مسموح به'},400);
+   if(!records.length||records.length>20000)return out({error:'الملف فارغ أو يحتوي على عدد سجلات غير مسموح به'},400);
    let added=0,skipped=0,failed=0;const errors=[];
    sql.exec('BEGIN IMMEDIATE');
    try{
