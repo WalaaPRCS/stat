@@ -202,3 +202,32 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:950px){.hospital-insights{grid-template-columns:1fr}}
 @media(max-width:560px){.hospital-insight-panel{padding:16px 12px}.hospital-indicator-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px}.hospital-indicator-card{min-height:133px;padding-inline:3px}.hospital-number-ring{width:81px;height:81px}.hospital-number-ring b{font-size:19px}.hospital-indicator-card strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.hospital-indicator-card,.hospital-number-ring .ring-value.is-animated{transition:none}.hospital-indicator-card:hover{transform:none}}
+
+
+/* Hospital overview: clearer labels and three circular indicators per row */
+.hospital-insights{align-items:stretch;gap:18px}
+.hospital-insight-panel{padding:22px 20px}
+.hospital-insight-heading{gap:13px;margin-bottom:17px}
+.hospital-insight-heading h2{font-size:18px;color:#1d3040}
+.hospital-insight-heading p{font-size:13px;color:#667786}
+.hospital-insight-icon{width:44px;height:44px;border-radius:14px}
+.hospital-indicator-grid.hospital-facility-indicators,.hospital-indicator-grid.hospital-service-indicators{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:10px}
+.hospital-indicator-card{min-height:166px;justify-content:flex-start;gap:7px;padding:11px 8px 10px;border-radius:16px}
+.hospital-number-ring{width:100px;height:100px}
+.hospital-number-ring b{font-size:23px}
+.hospital-indicator-card strong{max-width:100%;overflow:visible;white-space:normal;overflow-wrap:anywhere;word-break:normal;font-size:14px;line-height:1.5;color:#20384b}
+.hospital-indicator-card small{max-width:100%;overflow:visible;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.45;color:#627585}
+.service-indicator{background:#fbfcfd}
+.service-indicator.blue .ring-value{stroke:#367fa8}
+.service-indicator.red .ring-value{stroke:#c43d50}
+.service-indicator.teal .ring-value{stroke:#348b83}
+.service-indicator.violet .ring-value{stroke:#7963a8}
+.service-indicator.gold .ring-value{stroke:#be8b38}
+.service-indicator .hospital-number-ring b{font-size:22px}
+.service-indicator[data-highlight-module]:hover{border-color:#dce7ed}
+.hospital-service-indicators .hospital-indicator-card strong{min-height:42px;display:flex;align-items:center;justify-content:center}
+.hospital-service-indicators .hospital-indicator-card small{font-weight:500}
+.hospital-count-up[data-highlight-count][data-count=""]{animation:hospital-loading-pulse 1s ease-in-out infinite alternate}
+@keyframes hospital-loading-pulse{from{opacity:.45}to{opacity:1}}
+@media(max-width:950px){.hospital-insights{grid-template-columns:1fr}}
+@media(max-width:600px){.hospital-insight-panel{padding:18px 12px}.hospital-insight-heading h2{font-size:16px}.hospital-insight-heading p{font-size:12px}.hospital-indicator-grid.hospital-facility-indicators,.hospital-indicator-grid.hospital-service-indicators{gap:5px}.hospital-indicator-card{min-height:150px;padding:9px 4px}.hospital-number-ring{width:82px;height:82px}.hospital-number-ring b,.service-indicator .hospital-number-ring b{font-size:19px}.hospital-indicator-card strong{font-size:12px;line-height:1.45}.hospital-indicator-card small{font-size:10px}}
