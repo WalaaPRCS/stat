@@ -231,3 +231,80 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @keyframes hospital-loading-pulse{from{opacity:.45}to{opacity:1}}
 @media(max-width:950px){.hospital-insights{grid-template-columns:1fr}}
 @media(max-width:600px){.hospital-insight-panel{padding:18px 12px}.hospital-insight-heading h2{font-size:16px}.hospital-insight-heading p{font-size:12px}.hospital-indicator-grid.hospital-facility-indicators,.hospital-indicator-grid.hospital-service-indicators{gap:5px}.hospital-indicator-card{min-height:150px;padding:9px 4px}.hospital-number-ring{width:82px;height:82px}.hospital-number-ring b,.service-indicator .hospital-number-ring b{font-size:19px}.hospital-indicator-card strong{font-size:12px;line-height:1.45}.hospital-indicator-card small{font-size:10px}}
+
+
+/* PHC overview restyled to match the EMS dashboard */
+.phc-overview{display:flex;flex-direction:column;gap:18px;max-width:1600px;margin-inline:auto}
+.phc-overview-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;overflow:hidden;margin:0;padding:23px 26px;border:1px solid #e7e9ed;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#fff 73%,#fff5f6 100%);box-shadow:0 8px 24px #1825340a}
+.phc-overview-head:before{position:absolute;inset:0 auto 0 0;width:7px;background:linear-gradient(180deg,#c82032,#e66b78);content:""}
+.phc-overview-intro{min-width:0}
+.phc-eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:5px;color:#b32235;font-size:12px;font-weight:700}
+.phc-eyebrow i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
+.phc-overview-intro h1{margin:0;color:#1c2836;font-size:27px;line-height:1.4}
+.phc-overview-intro p{margin:5px 0 0;color:#75808e;font-size:14px}
+.phc-overview-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.phc-overview-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:650;white-space:nowrap}
+.phc-overview-actions .btn.primary{background:#c82032;border-color:#c82032;box-shadow:0 5px 14px #c8203222}
+.phc-overview-actions .ico{width:17px;height:17px}
+.phc-overview-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.phc-overview-metric{position:relative;display:flex;align-items:center;gap:13px;min-height:108px;overflow:hidden;padding:16px 18px;border:1px solid #e6e9ee;border-inline-start:4px solid #c82032;border-radius:14px;background:#fff;box-shadow:0 5px 18px #18253408}
+.phc-overview-metric:after{position:absolute;inset:auto auto 0 0;width:70px;height:52px;border-radius:0 42px 0 0;background:#fff1f3;content:""}
+.phc-overview-metric.green{border-inline-start-color:#16965f}.phc-overview-metric.green:after{background:#e8f7ef}
+.phc-overview-metric.amber{border-inline-start-color:#d88928}.phc-overview-metric.amber:after{background:#fff5e6}
+.phc-overview-metric.blue{border-inline-start-color:#397daf}.phc-overview-metric.blue:after{background:#edf5fb}
+.phc-metric-icon{position:relative;z-index:1;display:grid;place-items:center;width:45px;height:45px;flex:none;border-radius:14px;background:#fff0f2;color:#c82032}
+.phc-overview-metric.green .phc-metric-icon{background:#e9f8f0;color:#16965f}
+.phc-overview-metric.amber .phc-metric-icon{background:#fff5e6;color:#cb7a20}
+.phc-overview-metric.blue .phc-metric-icon{background:#edf5fb;color:#397daf}
+.phc-metric-icon .ico{width:22px;height:22px}
+.phc-overview-metric>div{position:relative;z-index:1;min-width:0}
+.phc-overview-metric small{display:block;color:#66717d;font-size:13px;font-weight:650}
+.phc-overview-metric b{display:block;margin-top:1px;color:#1e2935;font-size:27px;line-height:1.3;font-variant-numeric:tabular-nums}
+.phc-overview-metric span:not(.phc-metric-icon){display:block;color:#85909b;font-size:11px}
+.phc-overview-metric .phc-metric-date{font-size:17px;white-space:nowrap}
+.phc-directory-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-top:3px}
+.phc-directory-heading h2{margin:0;color:#202e3c;font-size:20px}
+.phc-directory-heading p{margin:3px 0 0;color:#788491;font-size:13px}
+.phc-sort-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e7eaee;border-radius:999px;background:#fff;color:#65717e;font-size:11px;white-space:nowrap}
+.phc-sort-chip .ico{width:15px;height:15px;color:#bf3344}
+.phc-directory-toolbar{display:flex;align-items:end;gap:11px;padding:13px 14px;border:1px solid #e4e8ed;border-radius:13px;background:#fff;box-shadow:0 4px 14px #18253406}
+.phc-directory-toolbar>label:not(.phc-directory-search){display:flex;flex-direction:column;gap:4px;min-width:145px;color:#697684;font-size:11px}
+.phc-directory-toolbar .control{min-height:41px;border-radius:8px;background:#fbfcfd;font-size:13px}
+.phc-directory-search{position:relative;display:block;flex:1;min-width:190px}
+.phc-directory-search .ico{position:absolute;top:10px;right:12px;z-index:1;width:19px;height:19px;color:#8793a0}
+.phc-directory-search input{width:100%;height:41px;padding:7px 40px 7px 12px;border:1px solid #dfe4e9;border-radius:8px;background:#fbfcfd;color:#243244;font:inherit;font-size:13px}
+.phc-directory-count{margin-inline-start:auto;padding:0 3px 11px;color:#788491;font-size:12px;white-space:nowrap}
+.phc-directory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.phc-clinic-card{display:flex;min-width:0;flex-direction:column;overflow:hidden;border:1px solid #e3e8ed;border-top:3px solid #16965f;border-radius:14px;background:#fff;box-shadow:0 5px 17px #18253408;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.phc-clinic-card:hover{transform:translateY(-3px);border-color:#cbd9df;box-shadow:0 12px 25px #18253412}
+.phc-clinic-card[hidden]{display:none!important}
+.phc-clinic-card.is-closed{border-top-color:#c82032;background:linear-gradient(160deg,#fffafa,#fff 55%)}
+.phc-clinic-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0}
+.phc-clinic-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#e9f8f0;color:#16965f}
+.phc-clinic-card.is-closed .phc-clinic-icon{background:#fff0f2;color:#c82032}
+.phc-clinic-icon .ico{width:22px;height:22px}
+.phc-clinic-identity{padding:9px 17px 12px}
+.phc-clinic-identity h2{margin:0;font-size:16px;line-height:1.55;color:#202e3c}
+.phc-clinic-identity h2 a{color:inherit;text-decoration:none}
+.phc-clinic-identity h2 a:hover{color:#b82033}
+.phc-clinic-identity p{display:flex;align-items:center;gap:4px;margin:3px 0 0;color:#788491;font-size:12px}
+.phc-clinic-identity p .ico{width:14px;height:14px;color:#8e99a5}
+.phc-clinic-data{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:auto 15px 14px}
+.phc-clinic-data>div{min-width:0;padding:10px 11px;border:1px solid #edf0f3;border-radius:10px;background:#fafbfc}
+.phc-clinic-data span{display:block;color:#7a8692;font-size:10px}
+.phc-clinic-data b{display:block;margin-top:2px;color:#24313e;font-size:21px;line-height:1.35;font-variant-numeric:tabular-nums}
+.phc-clinic-data small{display:block;overflow-wrap:anywhere;color:#8a949f;font-size:10px;line-height:1.4}
+.phc-clinic-latest small{direction:ltr;text-align:right}
+.phc-clinic-card-actions{display:flex;gap:8px;padding:12px 15px;border-top:1px solid #edf0f2;background:#fcfcfd}
+.phc-clinic-card-actions .btn{display:inline-flex;align-items:center;justify-content:center;min-height:39px;flex:1;padding:7px 9px;border-radius:8px;font-size:11px;text-align:center;white-space:normal}
+.phc-clinic-card-actions .btn.primary{background:#c82032;border-color:#c82032;color:#fff}
+.phc-clinic-card.is-closed .phc-clinic-card-actions .btn.primary{background:#566372;border-color:#566372}
+.phc-directory-empty{grid-column:1/-1;padding:32px 20px;border:1px dashed #d9e0e6;border-radius:14px;background:#fff;text-align:center}
+.phc-directory-empty>span{display:grid;place-items:center;width:48px;height:48px;margin:0 auto 10px;border-radius:14px;background:#fff0f2;color:#c82032}
+.phc-directory-empty .ico{width:25px;height:25px}
+.phc-directory-empty h3{margin:0;color:#334352;font-size:17px}
+.phc-directory-empty p{margin:4px 0 0;color:#7c8793;font-size:13px}
+.phc-filter-empty{margin:0}
+@media(max-width:1150px){.phc-directory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phc-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.phc-overview-head{align-items:flex-start;flex-direction:column;padding:20px}.phc-overview-actions{width:100%}.phc-overview-actions .btn{flex:1}.phc-directory-toolbar{align-items:stretch;flex-direction:column}.phc-directory-toolbar>label:not(.phc-directory-search),.phc-directory-search{width:100%;min-width:0}.phc-directory-count{margin:0;padding:0 2px}.phc-directory-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:620px){.phc-overview-metrics{gap:8px}.phc-overview-metric{min-height:90px;gap:8px;padding:12px 10px}.phc-metric-icon{width:36px;height:36px;border-radius:11px}.phc-metric-icon .ico{width:19px;height:19px}.phc-overview-metric small{font-size:11px}.phc-overview-metric b{font-size:23px}.phc-overview-metric .phc-metric-date{font-size:14px}.phc-overview-intro h1{font-size:23px}.phc-overview-intro p{font-size:12px}.phc-directory-grid{grid-template-columns:1fr}.phc-clinic-card-actions{flex-direction:column}.phc-clinic-card-actions .btn{flex:auto}}
