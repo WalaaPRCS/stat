@@ -145,3 +145,32 @@ h1{font-size:29px;line-height:1.35;letter-spacing:0}h2{font-size:17px;line-heigh
 @media(max-width:1100px){.hospital-facility-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.hospital-hub-head{align-items:flex-start;flex-direction:column}.hospital-hub-title h1{font-size:26px}.hospital-hub-actions{width:100%}.hospital-hub-actions .btn{flex:1}.hospital-hub-summary{gap:8px}.hospital-hub-summary>div{min-height:76px;padding:11px 10px;gap:8px}.hospital-summary-icon{width:35px;height:35px;border-radius:11px}.hospital-hub-summary small{font-size:10px}.hospital-hub-summary b{font-size:18px}.hospital-hub-summary b[dir=ltr]{font-size:13px}.hospital-list-toolbar{align-items:stretch;flex-direction:column}.hospital-search,.hospital-region-filter{width:100%;min-width:0}.hospital-filter-count{margin:0;padding:0 3px}.hospital-facility-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hospital-facility-card{min-height:225px}.hospital-facility-card .sector-title{padding:14px 13px}.hospital-facility-card .sector-title h2{font-size:14px}.hospital-type-tag{font-size:9px;padding:3px 7px}}
 @media(max-width:500px){.hospital-hub-summary{grid-template-columns:1fr}.hospital-hub-summary>div{min-height:65px}.hospital-hub-summary b[dir=ltr]{font-size:16px}.hospital-facility-grid{grid-template-columns:1fr}.hospital-facility-card{min-height:210px}.hospital-hub-actions{flex-direction:column;align-items:stretch}.hospital-hub-actions .btn{flex:auto}}
+
+/* Interactive hospital indicators */
+.hospital-insights{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.hospital-insight-panel{min-width:0;padding:18px 19px;border:1px solid #e4e9ee;border-radius:16px;background:linear-gradient(145deg,#fff 0%,#fff 70%,#f8fbfd 100%);box-shadow:0 7px 22px #17233208}
+.hospital-insight-heading{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.hospital-insight-heading h2{margin:0;font-size:15px;line-height:1.5}
+.hospital-insight-heading p{margin:2px 0 0;color:#84909c;font-size:11px}
+.hospital-insight-icon{display:grid;place-items:center;width:39px;height:39px;flex:none;border-radius:12px;background:#fff0f2;color:#bd2d40}
+.hospital-insight-icon.region{background:#edf5fb;color:#3475a9}
+.hospital-insight-icon .ico{width:20px;height:20px}
+.hospital-region-chart,.hospital-ranking{display:flex;flex-direction:column;gap:5px}
+.hospital-region-row{display:grid;grid-template-columns:minmax(76px,1fr) minmax(65px,1.1fr) 48px 80px;align-items:center;gap:9px;width:100%;min-height:36px;padding:5px 7px;border:0;border-radius:9px;background:transparent;color:inherit;text-align:right;transition:background .16s ease}
+.hospital-region-row:hover,.hospital-region-row:focus-visible{background:#f2f7fa}
+.hospital-region-label{overflow:hidden;color:#41505e;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.hospital-bar-track,.hospital-ranking-bar{display:block;height:7px;overflow:hidden;border-radius:999px;background:#edf0f3}
+.hospital-bar-track i,.hospital-ranking-bar i{display:block;width:var(--bar-width);height:100%;border-radius:inherit;background:linear-gradient(90deg,#7ab4d8,#367dab);transition:width .65s cubic-bezier(.2,.75,.25,1)}
+.hospital-region-row b,.hospital-ranking-row>b{color:#24384a;font-size:12px;font-variant-numeric:tabular-nums}
+.hospital-region-row small{color:#8a949e;font-size:10px;white-space:nowrap}
+.hospital-ranking-row{display:grid;grid-template-columns:25px minmax(100px,1.2fr) minmax(50px,.8fr) 44px;align-items:center;gap:9px;min-height:36px;padding:4px 7px;border-radius:9px;transition:background .16s ease,transform .16s ease}
+.hospital-ranking-row:hover{background:#fff4f5;transform:translateX(-2px)}
+.hospital-rank-number{display:grid;place-items:center;width:23px;height:23px;border-radius:8px;background:#f2f4f6;color:#77828e;font-size:10px;font-weight:700}
+.hospital-ranking-row:nth-child(1) .hospital-rank-number{background:#fff0d7;color:#a36c18}
+.hospital-ranking-name{overflow:hidden;color:#344455;font-size:11px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+.hospital-ranking-name small{display:block;overflow:hidden;margin-top:1px;color:#8b96a0;font-size:9px;font-weight:400;text-overflow:ellipsis}
+.hospital-ranking-bar{height:6px;background:#f2e9eb}
+.hospital-ranking-bar i{background:linear-gradient(90deg,#eb9ba5,#c82032)}
+.hospital-insight-empty{margin:9px 0;color:#8a949e;font-size:12px}
+@media(max-width:950px){.hospital-insights{grid-template-columns:1fr}.hospital-insight-panel{padding:16px}}
+@media(max-width:560px){.hospital-region-row{grid-template-columns:minmax(72px,1fr) minmax(48px,.7fr) 40px 68px;gap:6px;padding-inline:3px}.hospital-region-row small{font-size:9px}.hospital-ranking-row{grid-template-columns:24px minmax(95px,1.2fr) minmax(35px,.7fr) 38px;gap:6px;padding-inline:3px}.hospital-ranking-name{font-size:10px}}
