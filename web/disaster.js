@@ -21,6 +21,7 @@ const disasterServices=[
 function disasterServicePage(id){
 const service=disasterServices.find(s=>s.id===id);if(!service){main.innerHTML='<section class="panel empty">الخدمة غير موجودة</section>';return}
 const allowed=id==='health-facilities'||id==='sanitation'||id==='camps',records=Disaster.serviceRecords[id]||[];
+const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'});
 if(allowed&&!Object.prototype.hasOwnProperty.call(Disaster.serviceRecords,id)){main.innerHTML='<section class="panel empty"><h2>'+esc(service.name)+'</h2><p>تحميل السجلات…</p></section>';api('disaster-service-records?service='+encodeURIComponent(id)).then(v=>{Disaster.serviceRecords[id]=v;render()}).catch(e=>{main.innerHTML='<section class="panel empty">'+esc(e.message)+'</section>'});return}
 if(id==='camps'){
 const summaries=records.filter(q=>q.kind!=='profile'&&q.kind!=='cumulative_snapshot'),profiles=records.filter(q=>q.kind==='profile'),statusName={created:'تم إنشاؤه',inactive:'خارج الخدمة',active:'فاعل',unknown:'غير محدد'},metricName={camps:'عدد التجمعات',beneficiaries:'المستفيدون'},campEdit=Disaster.campProfileEdit;
@@ -57,7 +58,6 @@ document.getElementById('camp-profile-form')?.addEventListener('submit',async e=
 return
 }
 const edit=Disaster.recordEdit&&Disaster.recordEdit.service===id?Disaster.recordEdit:null;
-const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'});
 let fields='<label>التاريخ<input class="control" type="date" name="date" required value="'+(edit?edit.date:today)+'"></label><label>المحافظة<select class="control" name="region">'+['شمال غزة','غزة','الوسطى','خانيونس','رفح'].map(v=>'<option '+(edit&&edit.region===v?'selected':'')+'>'+v+'</option>').join('')+'</select></label>';
 if(id==='health-facilities'){
 fields+='<label>فئة المستفيدين<select class="control" name="beneficiaryGroup">'+['المجتمعات','مراكز إيواء الجمعية','تجمعات النزوح'].map(v=>'<option '+(edit&&edit.beneficiaryGroup===v?'selected':'')+'>'+v+'</option>').join('')+'</select></label><label>حالة المرفق<select class="control" name="status">'+[['created','تم إنشاؤه'],['active','فاعل'],['inactive','خارج عن الخدمة']].map(v=>'<option value="'+v[0]+'" '+(edit&&edit.status===v[0]?'selected':'')+'>'+v[1]+'</option>').join('')+'</select></label><label>اسم المرفق (اختياري)<input class="control" name="facilityName" maxlength="180" value="'+esc(edit&&edit.facilityName||'')+'"></label><label>عدد المرافق<input class="control" name="count" type="number" min="0" step="1" required value="'+(edit?edit.count:1)+'"></label>';
