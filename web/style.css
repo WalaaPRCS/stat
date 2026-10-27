@@ -174,3 +174,31 @@ h1{font-size:29px;line-height:1.35;letter-spacing:0}h2{font-size:17px;line-heigh
 .hospital-insight-empty{margin:9px 0;color:#8a949e;font-size:12px}
 @media(max-width:950px){.hospital-insights{grid-template-columns:1fr}.hospital-insight-panel{padding:16px}}
 @media(max-width:560px){.hospital-region-row{grid-template-columns:minmax(72px,1fr) minmax(48px,.7fr) 40px 68px;gap:6px;padding-inline:3px}.hospital-region-row small{font-size:9px}.hospital-ranking-row{grid-template-columns:24px minmax(95px,1.2fr) minmax(35px,.7fr) 38px;gap:6px;padding-inline:3px}.hospital-ranking-name{font-size:10px}}
+
+
+/* Animated circular hospital indicators */
+.hospital-insights{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.hospital-insight-panel{position:relative;overflow:hidden;padding:21px;border-radius:19px;background:radial-gradient(ellipse at 100% 0%,#f3f8fc 0,transparent 46%),#fff;box-shadow:0 10px 28px #263b4b0b}
+.hospital-insight-panel:after{position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,#79b9d3,#397da5);content:""}
+.facility-panel:after{background:linear-gradient(90deg,#f1a9b2,#bd3043)}
+.hospital-indicator-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));align-items:start;gap:11px}
+.hospital-indicator-card{position:relative;display:flex;min-width:0;min-height:145px;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;padding:10px 6px 9px;border:1px solid transparent;border-radius:14px;background:#ffffffb8;color:inherit;text-align:center;transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease}
+button.hospital-indicator-card{font:inherit;cursor:pointer}
+.hospital-indicator-card:hover{transform:translateY(-4px);border-color:#dce8ef;background:#fff;box-shadow:0 9px 22px #263b4b12}
+.facility-indicator:hover{border-color:#f0d5d9;background:#fffafb}
+.hospital-number-ring{position:relative;display:grid;width:91px;height:91px;place-items:center;flex:none}
+.hospital-number-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.hospital-number-ring circle{fill:none;stroke-width:5}
+.hospital-number-ring .ring-track{stroke:#eaf0f3}
+.hospital-number-ring .ring-value{stroke:#4688ad;stroke-linecap:round;stroke-dasharray:270.18;stroke-dashoffset:270.18}
+.facility-indicator .ring-value{stroke:#c83d50}
+.hospital-number-ring .ring-value.is-animated{stroke-dashoffset:var(--ring-offset);transition:stroke-dashoffset 1.15s cubic-bezier(.2,.7,.25,1)}
+.hospital-number-ring b{position:relative;z-index:1;color:#1c3142;font-size:21px;font-weight:750;font-variant-numeric:tabular-nums;line-height:1}
+.hospital-indicator-card strong{display:block;max-width:100%;overflow:hidden;color:#334656;font-size:12px;font-weight:700;line-height:1.45;text-overflow:ellipsis;white-space:nowrap}
+.hospital-indicator-card small{display:block;max-width:100%;overflow:hidden;color:#82909b;font-size:10px;line-height:1.3;text-overflow:ellipsis;white-space:nowrap}
+.hospital-indicator-rank{position:absolute;top:4px;right:7px;display:grid;width:20px;height:20px;place-items:center;border-radius:7px;background:#f2f4f6;color:#76828d;font-size:9px;font-weight:700}
+.facility-indicator:nth-child(1) .hospital-indicator-rank{background:#fff0d8;color:#9c6b20}
+.hospital-insight-empty{grid-column:1/-1;margin:12px;color:#89949e;font-size:12px}
+@media(max-width:950px){.hospital-insights{grid-template-columns:1fr}}
+@media(max-width:560px){.hospital-insight-panel{padding:16px 12px}.hospital-indicator-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px}.hospital-indicator-card{min-height:133px;padding-inline:3px}.hospital-number-ring{width:81px;height:81px}.hospital-number-ring b{font-size:19px}.hospital-indicator-card strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.hospital-indicator-card,.hospital-number-ring .ring-value.is-animated{transition:none}.hospital-indicator-card:hover{transform:none}}
