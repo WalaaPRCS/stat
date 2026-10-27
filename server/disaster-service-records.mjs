@@ -3,6 +3,8 @@ const regions=['شمال غزة','غزة','الوسطى','خانيونس','رف�
 const healthGroups=['المجتمعات','مراكز إيواء الجمعية','تجمعات النزوح'];
 const sanitationTypes=['إدارة النفايات الصلبة','الصرف الصحي','تنظيف وتعقيم المرافق','توفير مرافق النظافة','التوعية بالنظافة والإصحاح','أخرى'];
 const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
+const sensitiveCampFields=new Set(['عنوان المخيم','إحداثية الموقع','مشرف المخيم','الصفة','رقم التواصل']);
+const safeFields=v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.entries(v).length<=80&&Object.entries(v).every(([k,x])=>typeof k==='string'&&k.length<=180&&!sensitiveCampFields.has(k)&&(x===null||['string','number','boolean'].includes(typeof x))&&(typeof x!=='string'||x.length<=2000));
 export function disasterServiceRecords(sql,out){
  sql.exec('CREATE TABLE IF NOT EXISTS disaster_service_records(id TEXT PRIMARY KEY,service TEXT NOT NULL,date TEXT NOT NULL,region TEXT NOT NULL,payload TEXT NOT NULL,updated_by TEXT NOT NULL,updated_at TEXT NOT NULL);CREATE INDEX IF NOT EXISTS disaster_service_by_date ON disaster_service_records(service,date,region)');
  return async(req,u)=>{
@@ -16,11 +18,15 @@ export function disasterServiceRecords(sql,out){
    if(!data||data.format!=='prcs-disaster-service-import-v1'||data.service!==service||!Array.isArray(data.records)||data.records.length>5000)return out({error:'ملف الاستيراد غير مطابق للخدمة أو يحتوي على سجلات أكثر من المسموح'},400);
    const insert=sql.prepare('INSERT OR IGNORE INTO disaster_service_records(id,service,date,region,payload,updated_by,updated_at) VALUES(?,?,?,?,?,?,?)');
    let added=0,skipped=0;const stamp=new Date().toISOString();
-   const safeFields=v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.entries(v).length<=80&&Object.entries(v).every(([k,x])=>typeof k==='string'&&k.length<=180&&(x===null||['string','number','boolean'].includes(typeof x))&&(typeof x!=='string'||x.length<=2000));
    for(const r of data.records){
     if(!r||typeof r!=='object'||!validDate(r.date)||!regions.includes(r.region)||typeof r.id!=='string'||!r.id||r.id.length>200)return out({error:'توجد سجلات بتاريخ أو محافظة أو معرّف غير صالح'},400);
     let payload;
-    if(service==='health-facilities'){
+    if(service==='camps'){
+   const campName=String(b.campName||'').trim(),status=String(b.status||''),closedDate=b.closedDate||null,closureReason=String(b.closureReason||'').trim();
+   if(b.kind!=='profile'||!campName||campName.length>180||!['active','inactive','unknown'].includes(status)||closedDate&&(!validDate(closedDate)||closedDate<date)||closureReason.length>300||!safeFields(b.fields))return out({error:'أكمل اسم التجمع والمحافظة والحالة والحقول بصورة صحيحة'},400);
+   if(b.id){const old=sql.prepare('SELECT payload FROM disaster_service_records WHERE id=? AND service=?').get(b.id,service);if(!old)return out({error:'ملف التجمع غير موجود'},404);if(JSON.parse(old.payload).kind!=='profile')return out({error:'لا يمكن تغيير سجل إحصائي إلى ملف تجمع'},409);}
+   payload={kind:'profile',campName,region,status,createdDate:date,closedDate,closureReason,fields:b.fields,notes,sourceRow:null};
+  }else if(service==='health-facilities'){
      const kind=String(r.kind||''),group=String(r.beneficiary_group||''),status=String(r.status||''),count=Number(r.count);
      if(!['monthly','historical','cumulative_snapshot'].includes(kind)||!healthGroups.includes(group)||!['created','inactive','active'].includes(status)||!Number.isSafeInteger(count)||count<0||count>100000||!validDate(r.period_start)||!validDate(r.period_end))return out({error:'توجد إحصائية مرافق صحية غير صالحة'},400);
      payload={kind,periodStart:r.period_start,periodEnd:r.period_end,beneficiaryGroup:group,status,count,facilityName:'',notes:String(r.notes||'').slice(0,2000),sourceRow:Number(r.source_row)||null};
@@ -47,8 +53,8 @@ export function disasterServiceRecords(sql,out){
    sql.prepare('DELETE FROM disaster_service_records WHERE id=? AND service=?').run(key,service);return out({deleted:true});
   }
   if(!['POST','PUT'].includes(req.method))return out({error:'طلب غير مدعوم'},405);
-  const region=String(b.region||'').trim(),date=b.date,notes=String(b.notes||'').trim();
-  if(!validDate(date)||!regions.includes(region)||notes.length>2000)return out({error:'تحقق من التاريخ والمحافظة والملاحظات'},400);
+  const region=String(b.region||'').trim(),date=service==='camps'&&b.kind==='profile'?b.createdDate:b.date,notes=String(b.notes||'').trim();
+  if(!validDate(date)||!regions.includes(region)||notes.length>2000)return out({error:'تحقق من تاريخ الإنشاء والمحافظة والملاحظات'},400);
   let payload;
   if(service==='health-facilities'){
    const group=String(b.beneficiaryGroup||''),status=String(b.status||''),count=Number(b.count),facilityName=String(b.facilityName||'').trim();
