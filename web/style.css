@@ -535,3 +535,30 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 .relief-quantities-scroll thead th{position:sticky;top:0;background:#f8fafc;box-shadow:0 1px 0 var(--line);}
 .relief-quantities-scroll tbody tr:last-child td{border-bottom:1px solid var(--line);}
 @media(max-width:700px){.relief-quantities-scroll{max-height:52vh}.relief-quantities-scroll table{min-width:620px}}
+
+/* Consistent action grouping across disaster subpages */
+.disaster-subpage-head{justify-content:space-between;align-items:center;gap:24px}
+.disaster-subpage-head .disaster-service-toolbar{display:flex;align-items:center;justify-content:flex-start;gap:9px;flex:0 0 auto;flex-wrap:wrap;max-width:min(62%,760px)}
+.disaster-subpage-head .disaster-service-toolbar>.btn,
+.disaster-subpage-head .disaster-service-toolbar>button,
+.disaster-subpage-head .disaster-service-toolbar>a{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:9px 15px;border:1px solid #dbe2e9;border-radius:10px;background:#fff;color:#344150;font-size:12px;line-height:1.4;white-space:nowrap;transition:background .15s,border-color .15s,transform .15s}
+.disaster-subpage-head .disaster-service-toolbar>.btn:hover,
+.disaster-subpage-head .disaster-service-toolbar>button:hover,
+.disaster-subpage-head .disaster-service-toolbar>a:hover{background:#f8fafb;border-color:#cbd4de;transform:translateY(-1px)}
+.disaster-subpage-head .disaster-service-toolbar>.btn.primary,
+.disaster-subpage-head .disaster-service-toolbar>button.primary,
+.disaster-subpage-head .disaster-service-toolbar>a.primary{background:#c82032;border-color:#c82032;color:#fff;box-shadow:0 5px 14px #c820321c}
+.disaster-subpage-head .disaster-service-toolbar>.btn.primary:hover,
+.disaster-subpage-head .disaster-service-toolbar>button.primary:hover,
+.disaster-subpage-head .disaster-service-toolbar>a.primary:hover{background:#ad1a2a;border-color:#ad1a2a}
+.disaster-subpage-head .disaster-service-toolbar .ico{width:16px;height:16px}
+@media(max-width:900px){
+ .disaster-subpage-head{align-items:flex-start}
+ .disaster-subpage-head .disaster-service-toolbar{max-width:100%;width:100%;justify-content:flex-start}
+}
+@media(max-width:600px){
+ .disaster-subpage-head .disaster-service-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .disaster-subpage-head .disaster-service-toolbar>.btn,
+ .disaster-subpage-head .disaster-service-toolbar>button,
+ .disaster-subpage-head .disaster-service-toolbar>a{width:100%;min-width:0;white-space:normal;text-align:center;padding:8px 9px;font-size:11px}
+}
