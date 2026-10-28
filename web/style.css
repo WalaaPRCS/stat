@@ -480,3 +480,51 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:1050px){.disaster-dashboard .disaster-key-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.disaster-services-grid{gap:10px}.disaster-service-card{padding:14px}}
 @media(max-width:800px){.disaster-dashboard .disaster-services-grid{grid-template-columns:1fr}.disaster-dashboard .ems-toolbar{width:100%}.disaster-dashboard .ems-toolbar .btn{flex:1}}
 @media(max-width:600px){.disaster-dashboard{gap:12px}.disaster-dashboard .disaster-key-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.disaster-dashboard .ems-toolbar{display:grid;grid-template-columns:1fr 1fr}.disaster-dashboard .ems-toolbar .btn{flex:auto;min-width:0;padding-inline:8px;font-size:11px}.disaster-dashboard .ems-toolbar .btn.primary{grid-column:1/-1}.disaster-service-card{gap:10px;min-height:0;padding:13px;border-radius:12px}.disaster-card-icon{width:37px;height:37px;border-radius:11px}.disaster-card-title{font-size:14px}.disaster-card-stats{grid-template-columns:1fr;gap:6px;margin-top:10px}.disaster-card-stat{padding:7px 9px}.disaster-quick-strip>div{padding:9px 10px}}
+
+/* Disaster service pages follow the EMS dashboard visual system */
+.disaster-service-page{display:flex;flex-direction:column;gap:16px;max-width:1600px;margin-inline:auto}
+.disaster-subpage-head{min-height:94px;padding:18px 22px}
+.disaster-subpage-head .ems-dashboard-copy h1,.disaster-subpage-head>h1{margin:0;color:#1c2836;font-size:24px;line-height:1.4}
+.disaster-subpage-head .ems-dashboard-copy p,.disaster-subpage-head>.subtitle{margin:4px 0 0;color:#75808e;font-size:12px}
+.disaster-subpage-head>.ems-toolbar,.disaster-subpage-head>div:last-child{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.disaster-service-page .ems-toolbar .btn,.disaster-subpage-head>.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 12px;border-radius:9px;font-size:11px;white-space:nowrap}
+.disaster-service-page .ems-toolbar .btn.primary,.disaster-subpage-head>.btn.primary{background:#c82032;border-color:#c82032;box-shadow:0 5px 14px #c820321c}
+.disaster-service-page .ems-toolbar .ico{width:16px;height:16px}
+.disaster-service-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));align-items:end;gap:11px;padding:14px 16px;border-radius:14px;box-shadow:0 4px 15px #18253406}
+.disaster-service-filters label{display:flex;flex-direction:column;gap:5px;min-width:0;color:#64717e;font-size:11px;font-weight:600}
+.disaster-service-filters .control{width:100%;min-height:39px;border:1px solid #dfe5ea;border-radius:8px;background:#fbfcfd;font-size:12px}
+.disaster-service-filters>.btn{min-height:39px;white-space:nowrap}
+.disaster-service-page .disaster-service-metrics{grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px;margin:0}
+.disaster-service-page .metric{min-height:99px;padding:13px 15px;border-radius:13px}
+.disaster-service-page .metric-label{font-size:12px}
+.disaster-service-page .metric b{font-size:25px}
+.disaster-service-page .metric small{font-size:10px}
+.disaster-service-page>.subtitle,.disaster-service-page>p.subtitle{margin:0;padding:9px 12px;border:1px solid #edf0f3;border-radius:9px;background:#fafbfc;color:#75808d;font-size:10px;line-height:1.7}
+.disaster-service-panel{overflow:hidden;border:1px solid #e5e9ee;border-radius:14px;box-shadow:0 5px 18px #18253407}
+.disaster-service-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid #edf0f2;background:linear-gradient(100deg,#fff 0%,#fffafb 100%)}
+.disaster-service-panel .panel-head h2{margin:0;color:#263441;font-size:14px}
+.disaster-service-panel .panel-head .subtitle,.disaster-service-panel .panel-head p{margin:3px 0 0;color:#87919b;font-size:10px}
+.disaster-service-panel .panel-body{padding:15px 16px}
+.disaster-service-page .disaster-service-table{margin:0 13px 12px}
+.disaster-service-page table{min-width:700px}
+.disaster-service-page table thead th{background:#f7f8fa;color:#55616d;font-size:10px}
+.disaster-service-page table tbody td{color:#344150;font-size:11px}
+.disaster-service-page table tbody tr:hover{background:#fffafb}
+.disaster-service-page .table-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 14px;padding:11px 0;border-top:1px solid #edf0f2;color:#7d8792;font-size:10px}
+.disaster-service-page .table-foot .btn{min-height:34px;padding:6px 11px;border-radius:8px;font-size:10px}
+.disaster-service-page .form-panel,.disaster-service-page .disaster-service-form{width:100%;max-width:none;overflow:hidden;padding:0;border:1px solid #e4e8ed;border-radius:15px;background:#fff;box-shadow:0 7px 22px #18253409}
+.disaster-service-page .form-panel>.form-section,.disaster-service-page .disaster-service-form>.form-section{margin:0 20px;padding:17px 0;border-bottom:1px solid #edf0f2}
+.disaster-service-page .form-panel .form-section h2,.disaster-service-page .disaster-service-form .form-section h2{margin:0 0 12px;color:#293745;font-size:14px}
+.disaster-service-page .form-grid{gap:12px}
+.disaster-service-page form label{color:#53616e;font-size:11px;font-weight:600}
+.disaster-service-page form .control{min-height:41px;border:1px solid #dfe5ea;border-radius:8px;background:#fbfcfd;font-size:12px}
+.disaster-service-page form textarea.control{min-height:85px;padding:10px;resize:vertical}
+.disaster-service-page .form-actions{display:flex;align-items:center;gap:9px;padding:13px 20px;border-top:1px solid #edf0f2;background:#fafbfc}
+.disaster-service-page .form-actions .btn{min-height:40px;padding:8px 15px;border-radius:9px;font-size:11px}
+.disaster-service-page details{border:1px solid #edf0f3;border-radius:9px;background:#fafbfc}
+.disaster-service-page details>summary{padding:9px 11px;color:#53616e;font-size:11px;font-weight:650;cursor:pointer}
+.disaster-service-page .camp-metrics,.disaster-service-page .disaster-camp-metrics{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+.disaster-service-page .notice,.disaster-service-page .db-banner{border-radius:10px}
+.disaster-service-page .empty{padding:25px}
+@media(max-width:900px){.disaster-service-page .disaster-service-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.disaster-subpage-head{align-items:flex-start;flex-direction:column}.disaster-subpage-head>.ems-toolbar,.disaster-subpage-head>div:last-child{justify-content:flex-start}}
+@media(max-width:600px){.disaster-service-page{gap:12px}.disaster-subpage-head{gap:12px;padding:16px}.disaster-subpage-head .ems-dashboard-copy h1,.disaster-subpage-head>h1{font-size:21px}.disaster-subpage-head>.ems-toolbar,.disaster-subpage-head>div:last-child{width:100%;justify-content:stretch}.disaster-service-page .ems-toolbar .btn,.disaster-subpage-head>.btn{flex:1;min-width:0;padding-inline:8px;font-size:10px}.disaster-service-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px}.disaster-service-filters>.btn{width:100%;padding:7px 8px;font-size:10px}.disaster-service-page .disaster-service-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.disaster-service-page .metric{min-height:88px;padding:11px 10px}.disaster-service-page .metric-label{font-size:10px}.disaster-service-page .metric b{font-size:21px}.disaster-service-panel .panel-head{align-items:flex-start;flex-direction:column;padding:12px}.disaster-service-page .disaster-service-table{margin:0 7px 8px}.disaster-service-panel .panel-body{padding:12px}.disaster-service-page .form-panel>.form-section,.disaster-service-page .disaster-service-form>.form-section{margin-inline:13px;padding:14px 0}.disaster-service-page .form-grid{grid-template-columns:1fr;gap:9px}.disaster-service-page .form-actions{flex-wrap:wrap;padding:12px 13px}.disaster-service-page .form-actions .btn{flex:1}.disaster-service-page .table-foot{margin-inline:8px}}
