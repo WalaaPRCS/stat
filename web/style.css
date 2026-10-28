@@ -450,3 +450,33 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:1050px){.ems-entry-form .ems-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.ems-entry-head{align-items:flex-start;flex-direction:column}.ems-entry-back{align-self:flex-start}.ems-entry-form .ems-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ems-entry-form .ems-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.ems-entry-page{gap:12px}.ems-entry-head{padding:17px}.ems-entry-head .ems-dashboard-copy h1{font-size:21px}.ems-entry-form{border-radius:13px}.ems-form-intro{align-items:flex-start;padding:14px}.ems-form-required{display:none}.ems-entry-form .ems-form-section{margin:0 14px;padding:16px 0}.ems-entry-form .ems-meta-grid,.ems-entry-form .ems-data-grid{grid-template-columns:1fr;gap:8px}.ems-entry-form .ems-data-grid>div{padding:10px}.ems-entry-form .ems-data-grid label{min-height:0}.ems-entry-form .ems-entry-actions{flex-wrap:wrap;padding:12px 14px}.ems-entry-actions .btn{flex:1}.ems-entry-actions #ems-save-status{flex-basis:100%;margin:0}}
+
+/* Disaster dashboard aligned with EMS statistics */
+.disaster-dashboard{gap:16px}
+.disaster-dashboard .disaster-key-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.disaster-dashboard .disaster-services-section{padding:2px 0 0}
+.disaster-services-title{margin:0 1px 12px}
+.disaster-services-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.disaster-service-card{position:relative;display:flex;align-items:flex-start;gap:14px;min-width:0;min-height:148px;padding:17px 18px;border:1px solid #e4e8ed;border-radius:15px;background:linear-gradient(120deg,#fff 0%,#fff 74%,#fffafb 100%);box-shadow:0 5px 18px #18253408;color:inherit;text-decoration:none;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.disaster-service-card:hover{transform:translateY(-2px);border-color:#edc4c9;box-shadow:0 10px 24px #18253412}
+.disaster-service-card:focus-visible{outline:3px solid #c8203240;outline-offset:2px}
+.disaster-card-icon{display:grid;place-items:center;width:43px;height:43px;flex:none;border:1px solid #f2dce0;border-radius:13px;background:#fff1f3;color:#c82032}
+.disaster-card-icon .ico{width:22px;height:22px}
+.disaster-card-content{display:block;min-width:0;flex:1}
+.disaster-card-title{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#253343;font-size:15px;font-weight:750;line-height:1.5}
+.disaster-card-title>span{color:#c82032;font-size:18px;transition:transform .15s ease}
+.disaster-service-card:hover .disaster-card-title>span{transform:translateX(-3px)}
+.disaster-card-desc{display:block;margin-top:2px;color:#7d8792;font-size:11px;line-height:1.65}
+.disaster-card-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:13px}
+.disaster-card-stat{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:8px 10px;border:1px solid #edf0f3;border-radius:9px;background:#fafbfc}
+.disaster-card-stat>span{overflow:hidden;color:#687481;font-size:10px;line-height:1.5;text-overflow:ellipsis}
+.disaster-card-stat>b{flex:none;color:#293847;font-size:14px;font-variant-numeric:tabular-nums}
+.disaster-card-stat small{color:#87919b;font-size:9px;font-weight:500}
+.disaster-card-empty{display:flex;align-items:center;gap:7px;margin-top:15px;padding:9px 10px;border:1px dashed #e4e8ed;border-radius:9px;color:#87919b;font-size:10px}
+.disaster-card-empty .ico{width:16px;height:16px;color:#c82032}
+.disaster-dashboard-note{margin:0;padding:9px 12px;border:1px solid #edf0f3;border-radius:9px;background:#fafbfc;color:#78838f;font-size:10px;line-height:1.65}
+.disaster-dashboard .ems-toolbar .btn{gap:7px}
+.disaster-dashboard .ems-toolbar .ico{width:17px;height:17px}
+@media(max-width:1050px){.disaster-dashboard .disaster-key-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.disaster-services-grid{gap:10px}.disaster-service-card{padding:14px}}
+@media(max-width:800px){.disaster-dashboard .disaster-services-grid{grid-template-columns:1fr}.disaster-dashboard .ems-toolbar{width:100%}.disaster-dashboard .ems-toolbar .btn{flex:1}}
+@media(max-width:600px){.disaster-dashboard{gap:12px}.disaster-dashboard .disaster-key-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.disaster-dashboard .ems-toolbar{display:grid;grid-template-columns:1fr 1fr}.disaster-dashboard .ems-toolbar .btn{flex:auto;min-width:0;padding-inline:8px;font-size:11px}.disaster-dashboard .ems-toolbar .btn.primary{grid-column:1/-1}.disaster-service-card{gap:10px;min-height:0;padding:13px;border-radius:12px}.disaster-card-icon{width:37px;height:37px;border-radius:11px}.disaster-card-title{font-size:14px}.disaster-card-stats{grid-template-columns:1fr;gap:6px;margin-top:10px}.disaster-card-stat{padding:7px 9px}.disaster-quick-strip>div{padding:9px 10px}}
