@@ -19,3 +19,47 @@
 
 .cath-main-tabs{margin:14px 0 18px}.cath-main-tabs button{min-width:120px}.ops-filters{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px}.ops-filters .field{min-width:0}.ops-search{grid-column:span 2}.ops-charts{margin-bottom:4px}.ops-picker .cath-column-menu{z-index:20}@media(max-width:950px){.ops-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.ops-filters{grid-template-columns:1fr}.ops-search{grid-column:auto}}
 .ops-pivot-table thead tr:first-child th:not(:first-child){background:#fbecee;color:#7f1d2d;border-bottom:1px solid #e7b9c1}.ops-pivot-table thead tr:nth-child(2) th{background:#f7f9fc;color:#475569;font-size:12px}.ops-pivot-table th[rowspan="2"]{vertical-align:middle}
+
+/* Shared look for pages under Special Reports */
+main:has(.cath-page-head),main:has(.maw-page-head),main:has(.amal-head),main:has(.qd-head){display:block}
+main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,main:has(.qd-head)>*{--special-red:#c82032}
+.cath-page-head,.maw-page-head,.amal-head,.qd-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:120px;margin:0 0 18px;padding:23px 26px;border:1px solid #e7e9ed;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#fff 73%,#fff5f6 100%);box-shadow:0 8px 24px #1825340a}
+.cath-page-head:before,.maw-page-head:before,.amal-head:before,.qd-head:before{position:absolute;inset:0 auto 0 0;width:7px;border-radius:18px 0 0 18px;background:linear-gradient(180deg,#c82032,#e66b78);content:""}
+.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{margin:0;color:#1c2836;font-size:27px;line-height:1.4}
+.cath-page-head .subtitle,.maw-page-head .subtitle,.amal-head .subtitle,.qd-head p{margin:5px 0 0;color:#75808e}
+.cath-page-head .btn,.maw-page-actions .btn,.amal-head .btn,.qd-actions .btn{min-height:42px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:650}
+.cath-page-head .btn.primary,.maw-page-actions .btn.primary,.amal-head .btn.primary,.qd-actions .btn.primary{background:#c82032;border-color:#c82032;color:#fff;box-shadow:0 5px 14px #c8203222}
+.cath-page-head .pill,.maw-page-head .pill,.amal-head .pill{border:1px solid #f0dadd;background:#fff1f3;color:#b32235}
+.cath-upload,.cath-entry-panel,.maw-import-panel,.maw-entry-panel,.amal-import,.amal-history,.qd-panel,.cath-panel{border:1px solid #e4e8ed;border-radius:14px;background:#fff;box-shadow:0 4px 14px #18253406}
+.cath-upload,.maw-import-panel,.amal-import{padding:18px 20px}
+.cath-upload h2,.maw-entry-head h2,.amal-import h2,.amal-history h2{color:#202e3c}
+.cath-main-tabs,.maw-tabs,.amal-tabs{display:flex;gap:6px;padding:4px;border:1px solid #e5e8ec;border-radius:10px;background:#f6f7f9}
+.cath-main-tabs button,.maw-tabs button,.amal-tabs button{border:0;border-radius:8px;color:#687582}
+.cath-main-tabs button.active,.maw-tabs button.active,.amal-tabs button.active{background:#fff;color:#b82033;box-shadow:0 2px 7px #18253412}
+.cath-filters,.maw-filters,.maw-birth-filters,.amal-filters,.ops-filters,.qd-actions{border:1px solid #e4e8ed;border-radius:13px;background:#fff;box-shadow:0 4px 14px #18253406}
+.cath-metrics,.maw-stats,.amal-metrics,.qd-highlights{gap:14px}
+.cath-metrics .metric,.maw-stats .metric,.amal-metrics .metric,.qd-highlights article{border:1px solid #e6e9ee;border-inline-start:4px solid #c82032;border-top:1px solid #e6e9ee;border-radius:14px;background:#fff;box-shadow:0 5px 18px #18253408}
+.cath-metrics .metric:nth-child(2),.maw-stats .metric:nth-child(2),.amal-metrics .metric:nth-child(2){border-inline-start-color:#16965f}
+.cath-metrics .metric:nth-child(3),.maw-stats .metric:nth-child(3),.amal-metrics .metric:nth-child(3){border-inline-start-color:#d88928}
+.cath-metrics .metric:nth-child(4),.amal-metrics .metric:nth-child(4){border-inline-start-color:#397daf}
+.cath-metrics .metric-label,.maw-stats .metric-label,.amal-metrics .metric-label{color:#66717d}
+.cath-metrics .metric b,.maw-stats .metric b,.amal-metrics .metric b{color:#1e2935;font-variant-numeric:tabular-nums}
+.cath-page-head~.tabs,.cath-page-head~.cath-main-tabs{margin:0 0 14px}
+.cath-preview,.maw-preview,.amal-preview,.cath-modal,.maw-modal,.amal-day-details{border-radius:14px}
+.cath-entry-form,.maw-entry-panel,.amal-import{color:#1c2836}
+.cath-add-record,.maw-add,.maw-save-row,.amal-actions .btn{border-radius:9px}
+.cath-entry-actions .btn.primary,.maw-entry-panel .btn.primary,.amal-actions .btn.primary{background:#c82032;border-color:#c82032;color:#fff}
+.cath-column-menu,.maw-column-menu{border:1px solid #e4e8ed;border-radius:12px;box-shadow:0 12px 32px #18253418}
+.cath-wide-table,.ops-pivot-table,.maw-table,.amal-table,.qd-panel .table-wrap{max-width:100%;overflow:auto;border:1px solid #e7eaee;border-radius:10px;background:#fff}
+.cath-wide-table table,.ops-pivot-table,.maw-table table,.amal-table table,.qd-panel table{min-width:680px}
+.cath-wide-table th,.ops-pivot-table th,.maw-table th,.amal-table th,.qd-panel th{background:#f7f8fa;color:#65717e}
+.cath-wide-table th,.cath-wide-table td,.ops-pivot-table th,.ops-pivot-table td,.maw-table th,.maw-table td,.amal-table th,.amal-table td,.qd-panel th,.qd-panel td{padding:10px 12px;border-bottom:1px solid #edf0f3}
+.cath-date-link,.maw-date,.amal-date-link{color:#b82033;font-weight:700}
+.qd-highlight{border:1px solid #e6e9ee!important;border-inline-start:4px solid #c82032!important;border-radius:14px!important;background:#fff!important;box-shadow:0 5px 18px #18253408!important}
+.qd-highlight:nth-child(2){border-inline-start-color:#16965f!important}.qd-highlight:nth-child(3){border-inline-start-color:#d88928!important}.qd-highlight:nth-child(4){border-inline-start-color:#397daf!important}
+.qd-highlight b,.qd-total{color:#a82032}
+.qd-grid{gap:14px}.qd-panel{padding:18px}
+.qd-bar i,.maw-bar i{background:#c82032}
+.amal-error,.maw-error,.cath-error{border-radius:10px}
+@media(max-width:800px){.cath-page-head,.maw-page-head,.amal-head,.qd-head{align-items:flex-start;flex-direction:column;padding:19px}.cath-metrics,.maw-stats,.amal-metrics,.qd-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}.qd-grid{grid-template-columns:1fr}}
