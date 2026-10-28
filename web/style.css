@@ -562,3 +562,29 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
  .disaster-subpage-head .disaster-service-toolbar>button,
  .disaster-subpage-head .disaster-service-toolbar>a{width:100%;min-width:0;white-space:normal;text-align:center;padding:8px 9px;font-size:11px}
 }
+
+/* Consistent actions for food relief, sanitation, camp and facility pages */
+.disaster-service-page .page-head .page-actions{display:flex;align-items:center;justify-content:flex-start;gap:9px;flex-wrap:wrap}
+.disaster-service-page .page-actions>.btn,
+.disaster-service-page .panel-head>.btn,
+.disaster-service-page .filters>.btn,
+.disaster-service-page .form-actions>.btn,
+.disaster-service-page td>.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 13px;border:1px solid #dbe2e9;border-radius:9px;background:#fff;color:#344150;font-size:11px;line-height:1.4;white-space:nowrap;transition:background .15s,border-color .15s,transform .15s}
+.disaster-service-page .page-actions>.btn:hover,
+.disaster-service-page .panel-head>.btn:hover,
+.disaster-service-page .filters>.btn:hover,
+.disaster-service-page .form-actions>.btn:hover,
+.disaster-service-page td>.btn:hover{background:#f8fafb;border-color:#cbd4de;transform:translateY(-1px)}
+.disaster-service-page .page-actions>.btn.primary,
+.disaster-service-page .form-actions>.btn.primary{background:#c82032;border-color:#c82032;color:#fff;box-shadow:0 4px 12px #c820321c}
+.disaster-service-page .page-actions>.btn.primary:hover,
+.disaster-service-page .form-actions>.btn.primary:hover{background:#ad1a2a;border-color:#ad1a2a}
+.disaster-service-page .panel-head{flex-direction:row;align-items:center}
+.disaster-service-page .panel-head .btn{flex:0 0 auto}
+.disaster-service-page .form-actions{flex-wrap:wrap}
+.disaster-service-page .table-wrap td .btn{min-height:31px;padding:5px 9px}
+@media(max-width:600px){
+ .disaster-service-page .page-head .page-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .disaster-service-page .page-actions>.btn{width:100%;white-space:normal}
+ .disaster-service-page .panel-head{flex-direction:column;align-items:flex-start}
+}
