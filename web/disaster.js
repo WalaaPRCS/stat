@@ -62,7 +62,27 @@ if(!Disaster.archiveSummary&&!Disaster.archiveBusy&&!Disaster.archiveError)disas
  const wrap=document.createElement('div');wrap.className='ems-dashboard disaster-service-page disaster-service-'+String(id||'unknown').replace(/[^a-z0-9-]/gi,'');
  while(main.firstChild)wrap.append(main.firstChild);main.append(wrap);
  const title=wrap.querySelector('.page-head');
- if(title){title.classList.add('ems-dashboard-head','disaster-subpage-head');let copy=title.querySelector(':scope > div:first-child');if(!copy){const heading=title.querySelector(':scope > h1');if(heading){copy=document.createElement('div');copy.className='ems-dashboard-copy';title.insertBefore(copy,heading);copy.append(heading);const subtitle=title.querySelector(':scope > .subtitle');if(subtitle)copy.append(subtitle)}}if(copy){copy.classList.add('ems-dashboard-copy');if(!copy.querySelector('.ems-dashboard-kicker'))copy.insertAdjacentHTML('afterbegin','<span class="ems-dashboard-kicker"><i></i> مواجهة الكوارث · خدمات الاستجابة</span>')}const actions=title.querySelector(':scope > div:last-child');if(actions&&actions!==copy)actions.classList.add('ems-toolbar')}
+ if(title){
+  title.classList.add('ems-dashboard-head','disaster-subpage-head');
+  let copy=title.querySelector(':scope > div:first-child');
+  if(!copy){
+   const heading=title.querySelector(':scope > h1');
+   if(heading){copy=document.createElement('div');copy.className='ems-dashboard-copy';title.insertBefore(copy,heading);copy.append(heading);const subtitle=title.querySelector(':scope > .subtitle');if(subtitle)copy.append(subtitle)}
+  }
+  if(copy){copy.classList.add('ems-dashboard-copy');if(!copy.querySelector('.ems-dashboard-kicker'))copy.insertAdjacentHTML('afterbegin','<span class="ems-dashboard-kicker"><i></i> مواجهة الكوارث · خدمات الاستجابة</span>')}
+  const direct=Array.from(title.children).filter(el=>el!==copy);
+  if(direct.length){
+   const toolbar=document.createElement('div');toolbar.className='ems-toolbar disaster-service-toolbar';toolbar.setAttribute('aria-label','إجراءات الصفحة');
+   direct.forEach(el=>{
+    if(el.matches(':scope > div')&&el.querySelector('.btn,a,button')){
+     Array.from(el.children).forEach(action=>toolbar.append(action));
+     if(el.textContent.trim()&&!el.querySelector('.btn,a,button'))toolbar.append(el);
+     el.remove();
+    }else toolbar.append(el);
+   });
+   title.append(toolbar);
+  }
+ }
  wrap.querySelectorAll('.filters').forEach(el=>el.classList.add('panel','ems-filter-panel','disaster-service-filters'));
  wrap.querySelectorAll('.metrics').forEach(el=>el.classList.add('ems-key-metrics','disaster-service-metrics'));
  wrap.querySelectorAll('.panel').forEach(el=>el.classList.add('disaster-service-panel'));
