@@ -709,3 +709,37 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:1150px){.hospital-hub .hospital-facility-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.hospital-hub .hospital-hub-head{align-items:flex-start;flex-direction:column;padding:20px}.hospital-hub .hospital-hub-actions{width:100%}.hospital-hub .hospital-hub-summary.phc-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.hospital-hub .hospital-facility-grid,.hospital-hub .hospital-hub-summary.phc-overview-metrics{grid-template-columns:1fr}.hospital-hub .hospital-hub-head h1{font-size:23px}}
+
+/* Homepage KPI strip and shared Special Reports hierarchy */
+.home-kpi-section{display:flex;flex-direction:column;gap:10px;margin-top:-2px}
+.home-kpi-heading{display:flex;align-items:end;justify-content:space-between;gap:14px}
+.home-kpi-heading h2{margin:0;color:#202e3c;font-size:20px}
+.home-kpi-heading>a{display:inline-flex;align-items:center;gap:7px;color:#b82033;font-size:13px;font-weight:700}
+.home-kpi-section .health-module-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0}
+.home-kpi-section .health-module-card{min-height:96px;padding:15px 18px;border:1px solid #e6e9ee;border-inline-start:4px solid #c82032;border-top:1px solid #e6e9ee;border-radius:14px;background:linear-gradient(135deg,#fff 0%,#fff 75%,#fff7f8 100%);box-shadow:0 5px 18px #18253408}
+.home-kpi-section .health-module-card:nth-child(2){border-inline-start-color:#16965f}.home-kpi-section .health-module-card:nth-child(3){border-inline-start-color:#397daf}
+.home-kpi-section .health-module-card h2{font-size:15px;margin:0}.home-kpi-section .health-module-card .health-module-number{font-size:25px;margin:1px 0}.home-kpi-section .health-module-card p{margin:0;font-size:11px}.home-kpi-section .health-module-meta{font-size:10px}
+.home-health-summary{padding:15px 18px;border:1px solid #e6e9ee;border-radius:14px;background:#fff;box-shadow:0 5px 18px #18253408}
+.home-health-summary .home-card-label{border:0;padding:0}
+.home-health-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 15px;border-top:1px solid #edf0f3;color:#64717e;font-size:12px}
+.home-health-entry a{display:inline-flex;align-items:center;gap:6px;color:#b82033;font-weight:750}
+.special-report-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;color:#b32235;font-size:12px;font-weight:750}
+.special-report-kicker i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
+.cath-page-head .special-report-kicker,.maw-page-head .special-report-kicker,.amal-head .special-report-kicker,.qd-head .special-report-kicker{position:relative}
+.cath-page-head,.maw-page-head,.amal-head,.qd-head{margin-bottom:16px}
+.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:27px;font-weight:800}
+.cath-page-head .subtitle,.maw-page-head .subtitle,.amal-head .subtitle,.qd-head p{font-size:13px}
+.cath-upload,.cath-entry-panel,.maw-import-panel,.maw-entry-panel,.amal-import,.amal-history,.qd-panel{box-shadow:0 6px 18px #18253408}
+.cath-upload-copy,.maw-entry-head,.amal-import>header{padding-bottom:13px;border-bottom:1px solid #edf0f3}
+.cath-upload-icon{border-radius:13px}
+.cath-entry-panel,.maw-entry-panel,.amal-import{overflow:hidden}
+.cath-entry-form,.maw-entry-panel form,.amal-import form{padding-top:14px}
+.cath-entry-date,.maw-date-field{padding:12px 14px;border:1px solid #e8edf0;border-radius:11px;background:#fafcfd}
+.cath-entry-record,.maw-record{border:1px solid #e5e9ed;border-radius:12px;background:#fbfcfd}
+.cath-preview-stats,.maw-preview-grid,.amal-preview-grid{gap:10px}
+.cath-preview-stats>div,.maw-preview-grid>span,.amal-preview-grid>div{border:1px solid #e5e9ed;border-radius:10px;background:#fff}
+.cath-filters,.maw-filters,.maw-birth-filters,.amal-filters,.ops-filters,.qd-actions{padding:14px}
+.cath-filters input,.cath-filters select,.maw-filters input,.maw-filters select,.amal-filters input,.amal-filters select,.qd-actions input,.qd-actions select{min-height:41px;border:1px solid #dfe4e9;border-radius:8px;background:#fbfcfd;padding:7px 10px}
+.cath-modal-backdrop,.maw-modal-backdrop,.amal-detail-backdrop{backdrop-filter:blur(3px)}
+@media(max-width:800px){.home-kpi-section .health-module-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.home-kpi-section .health-module-card{min-height:88px;padding:12px}}
+@media(max-width:560px){.home-kpi-heading{align-items:flex-start;flex-direction:column}.home-kpi-section .health-module-cards{grid-template-columns:1fr}.home-health-entry{align-items:flex-start;flex-direction:column}.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}}
