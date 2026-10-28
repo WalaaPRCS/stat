@@ -17,8 +17,36 @@ const disasterServices=[
 {id:'health-facilities',name:'المرافق الصحية',desc:'تسجيل المرافق المنشأة والفاعلة والخارجة عن الخدمة',icon:'health',keys:['sanitationBuilt','sanitationActive','sanitationInactive']},
 {id:'sanitation',name:'الإصحاح',desc:'تسجيل أنشطة النفايات والصرف الصحي ومرافق النظافة',icon:'health',keys:[]},
 {id:'camps',name:'تجمعات النزوح',desc:'التجمعات وحالة الخدمة وبيانات الإيواء',icon:'community',keys:['campsBuilt','campsActive','shelterPeople']}
-];function disasterHub(){const latest=Disaster.data?.[0];main.innerHTML=`<div class="page-head"><div><h1>مواجهة الكوارث</h1><p class="subtitle">اختر الخدمة لعرض إحصائياتها وعملياتها</p></div><div style="display:flex;gap:10px;flex-wrap:wrap">${Account.user?.role==='admin'?'<a class="btn" href="#disaster-settings" title="إعدادات القسم" aria-label="إعدادات قسم مواجهة الكوارث">'+icon('settings')+' إعدادات القسم</a>':''}<a class="btn" href="#crossings">حالة المعابر والتقرير اليومي</a></div></div><div class="sectors">${disasterServices.map(x=>{const href=x.href||'#disaster-service/'+x.id;return `<article class="sector disaster" style="position:relative"><div class="sector-title"><span class="big-icon">${icon(x.icon)}</span><div><h2>${esc(x.name)}</h2><p>${esc(x.desc)}</p></div></div><div class="sector-stats">${(x.keys.length?x.keys.slice(0,3).map(k=>{const m=disasterMetrics.find(m=>m[0]===k);return [num(latest?.cumulative[k]),m[1]]}):[['—','الإحصائيات داخل القسم']]).map(([v,l])=>`<div><b>${v}</b><span>${esc(l)}</span></div>`).join('')}</div><a class="sector-link" href="${href}" aria-label="عرض إحصائيات ${esc(x.name)}">عرض الإحصائيات <span style="position:absolute;inset:0" aria-hidden="true"></span></a></article>`}).join('')}</div><p class="subtitle">مؤشرات المياه والمرافق والإيواء والتوعية من آخر تقرير مسجل${latest?' بتاريخ '+esc(latest.metricsDate):'؛ لا تتوفر تقارير بعد'}. عمليات المساعدات الإغاثية تُعرض داخل قسمها.</p>`;document.getElementById('breadcrumb').textContent='الرئيسية / مواجهة الكوارث';if(!Disaster.data&&!Disaster.busy&&!Disaster.error)disasterLoad()}
-function disasterServicePage(id){
+];function disasterHub(){
+const latest=Disaster.data?.[0],cum=latest?.cumulative||{},crossings=latest?.crossings||{};
+const services=disasterServices.map(service=>{
+ const href=service.href||'#disaster-service/'+service.id;
+ const stats=service.keys.slice(0,3).map(key=>{const m=disasterMetrics.find(item=>item[0]===key);return m?[key,m[1],m[2]]:null}).filter(Boolean);
+ const content=stats.length?stats.map(([key,label,unit])=>`<div class="disaster-card-stat"><span>${esc(label)}</span><b>${latest?num(cum[key]):'—'} <small>${esc(unit)}</small></b></div>`).join(''):`<div class="disaster-card-empty"><span class="ico">${icon(service.icon)}</span><span>افتح الخدمة لمراجعة سجلاتها وتفاصيلها</span></div>`;
+ return `<a class="disaster-service-card" href="${href}"><span class="disaster-card-icon">${icon(service.icon)}</span><span class="disaster-card-content"><span class="disaster-card-title">${esc(service.name)}<span aria-hidden="true">←</span></span><span class="disaster-card-desc">${esc(service.desc)}</span><span class="disaster-card-stats">${content}</span></span></a>`;
+}).join('');
+const knownCrossings=Object.values(crossings).filter(v=>v&&v!=='unknown');
+const openCrossings=knownCrossings.filter(v=>v==='open').length;
+main.innerHTML=`<div class="ems-dashboard disaster-dashboard">
+<header class="ems-dashboard-head"><div class="ems-dashboard-copy"><span class="ems-dashboard-kicker"><i></i> الاستجابة الإنسانية · قطاع غزة</span><h1>مواجهة الكوارث</h1><p>لوحة متابعة خدمات الاستجابة والإغاثة والإيواء والمياه والإصحاح</p></div><div class="ems-dashboard-head-side"><div class="ems-period-badge"><small>آخر إنجاز مسجل</small><b dir="ltr">${latest?esc(latest.metricsDate):'لا توجد تقارير'}</b></div><div class="ems-toolbar">${Account.user?.role==='admin'?`<a class="btn" href="#disaster-settings">${icon('settings')} إعدادات القسم</a>`:''}<a class="btn" href="#crossings">${icon('disaster')} حالة المعابر</a>${disasterCanWrite()?'<a class="btn primary" href="#sector-entry/disaster">＋ إضافة تقرير يومي</a>':''}</div></div></header>
+<section class="metrics ems-key-metrics disaster-key-metrics" aria-label="مؤشرات مواجهة الكوارث">
+${metric('الأسر المستفيدة',latest?num(cum.families):'—','تراكمي حسب آخر تقرير')}
+${metric('المياه الموزعة',latest?num(cum.waterTotal):'—','لتر · تراكمي')}
+${metric('المرافق الصحية العاملة',latest?num(cum.sanitationActive):'—','حسب آخر حالة مسجلة')}
+${metric('تجمعات النزوح العاملة',latest?num(cum.campsActive):'—','حسب آخر حالة مسجلة')}
+</section>
+<section class="ems-quick-strip disaster-quick-strip" aria-label="ملخص لوحة الكوارث">
+<div><span class="ems-strip-icon">${icon('calendar')}</span><div><small>تاريخ التقرير</small><b dir="ltr">${latest?esc(latest.date):'—'}</b></div></div>
+<div><span class="ems-strip-icon green">${icon('clock')}</span><div><small>الإنجازات حتى</small><b dir="ltr">${latest?esc(latest.metricsDate):'—'}</b></div></div>
+<div><span class="ems-strip-icon amber">${icon('disaster')}</span><div><small>الخدمات المعروضة</small><b>${num(disasterServices.length)} خدمات</b></div></div>
+<div><span class="ems-strip-icon blue">${icon('pin')}</span><div><small>المعابر المفتوحة</small><b>${latest?num(openCrossings)+' من '+num(disasterCrossings.length):'—'}</b></div></div>
+</section>
+<section class="disaster-services-section"><div class="ems-section-title disaster-services-title"><span class="ems-section-icon">${icon('disaster')}</span><div><h2>خدمات مواجهة الكوارث</h2><p>اختر الخدمة لفتح إحصائياتها وعملياتها</p></div></div><div class="disaster-services-grid">${services}</div></section>
+<p class="disaster-dashboard-note">${latest?`المؤشرات أعلاه من آخر تقرير مسجل بتاريخ ${esc(latest.metricsDate)}. الأرقام التراكمية تعرض كما وردت في التقرير.`:'لا توجد تقارير يومية مسجلة حتى الآن؛ ستظهر المؤشرات بعد إضافة أول تقرير.'}</p>
+</div>`;
+document.getElementById('breadcrumb').textContent='الرئيسية / مواجهة الكوارث';
+if(!Disaster.data&&!Disaster.busy&&!Disaster.error)disasterLoad();
+}function disasterServicePage(id){
 const service=disasterServices.find(s=>s.id===id);if(!service){main.innerHTML='<section class="panel empty">الخدمة غير موجودة</section>';return}
 const allowed=id==='health-facilities'||id==='sanitation'||id==='camps',records=Disaster.serviceRecords[id]||[];
 const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Hebron'});
