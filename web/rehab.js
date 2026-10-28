@@ -72,7 +72,7 @@ function rehabBind(){
  document.querySelector('#rehab-search')?.addEventListener('input',e=>{const v=e.target.value,p=e.target.selectionStart;rehabState.search=v;rehabState.page=1;rehabRender();const el=document.querySelector('#rehab-search');el?.focus();el?.setSelectionRange(p,p)});
  document.querySelector('#rehab-reset')?.addEventListener('click',()=>{Object.assign(rehabState,{from:'',to:'',region:'',category:'',service:'',search:'',page:1});rehabRender()});
  document.querySelector('#rehab-size')?.addEventListener('change',e=>{rehabState.size=Number(e.target.value);rehabState.page=1;rehabRender()});
- document.querySelector('#rehab-prev')?.addEventListener('click',()=>{rehabState.page--;rehabRender()});document.querySelector('#rehab-next')?.addEventListener('click',()=>{rehabState.page++;rehabRender()})
+ document.querySelector('#rehab-prev')?.addEventListener('click',()=>{rehabState.page--;rehabRender()});document.querySelector('#rehab-next')?.addEventListener('click',()=>{rehabState.page++;rehabRender()});communityDecorateEmsPage('rehab')
 }
 const rehabPreviousRender=render;
 render=function(){rehabPreviousRender();if(location.hash==='#sector-entry/rehab'||location.hash==='#sector-view/rehab'){rehabRender();if(!rehabState.loaded&&!rehabState.loading)rehabLoad()}};
