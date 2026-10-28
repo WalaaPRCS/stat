@@ -74,7 +74,7 @@ if(!Disaster.archiveSummary&&!Disaster.archiveBusy&&!Disaster.archiveError)disas
   if(direct.length){
    const toolbar=document.createElement('div');toolbar.className='ems-toolbar disaster-service-toolbar';toolbar.setAttribute('aria-label','إجراءات الصفحة');
    direct.forEach(el=>{
-    if(el.matches(':scope > div')&&el.querySelector('.btn,a,button')){
+    if(el.tagName==='DIV'&&el.querySelector('.btn,a,button')){
      Array.from(el.children).forEach(action=>toolbar.append(action));
      if(el.textContent.trim()&&!el.querySelector('.btn,a,button'))toolbar.append(el);
      el.remove();
