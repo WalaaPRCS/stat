@@ -87,6 +87,27 @@ if(p==='/api/ems-sync'){if(!hasPermission(u,'manage_settings'))return out({error
 if(p==='/api/hospital-settings')return handleHospitalSettings(req,u);
 if(p==='/api/hospital-activity-records')return handleHospitalActivity(req,u);
 if(p==='/api/disaster-service-records')return handleDisasterServiceRecords(req,u);
+if(p==='/api/disaster-dashboard'){
+ const parseRows=(table,withDate=false)=>sql.prepare('SELECT '+(withDate?'date,updated_at,':'')+'payload FROM '+table).all().map(row=>({...JSON.parse(row.payload),...(withDate?{_date:row.date,_updatedAt:row.updated_at}:{})}));
+ const reliefArchive=parseRows('relief_summaries',true),waterArchive=parseRows('water_summaries',true),kitchenArchive=parseRows('kitchen_summaries',true),awarenessArchive=parseRows('awareness_summaries',true);
+ const facilityRows=sql.prepare("SELECT date,updated_at,payload FROM disaster_service_records WHERE service='health-facilities'").all().map(row=>({...JSON.parse(row.payload),_date:row.date,_updatedAt:row.updated_at}));
+ const sanitationRows=sql.prepare("SELECT date,payload FROM disaster_service_records WHERE service='sanitation'").all().map(row=>({...JSON.parse(row.payload),_date:row.date}));
+ const campRows=sql.prepare("SELECT date,updated_at,payload FROM disaster_service_records WHERE service='camps'").all().map(row=>({...JSON.parse(row.payload),_date:row.date,_updatedAt:row.updated_at}));
+ const numericSum=(rows,key)=>{let total=0,found=false;for(const row of rows){const value=row[key];if(value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=0){total+=Number(value);found=true}}return found?total:null};
+ const activeFacilityGroups=new Map();
+ for(const row of facilityRows){if(!['monthly','historical','cumulative_snapshot'].includes(row.kind)||!['شمال غزة','غزة','الوسطى','خانيونس','رفح'].includes(row.region))continue;const key=row.region+'|'+row.beneficiaryGroup,end=row.periodEnd||row._date,old=activeFacilityGroups.get(key);if(!old||end>old.end)activeFacilityGroups.set(key,{end,rows:[row]});else if(end===old.end)old.rows.push(row)}
+ const activeFacilities=facilityRows.length?Array.from(activeFacilityGroups.values()).flatMap(group=>group.rows).filter(row=>row.status==='active').reduce((sum,row)=>sum+(Number.isFinite(Number(row.count))?Number(row.count):0),0):null;
+ const campProfiles=new Map();
+ for(const row of campRows){if(row.kind!=='profile'||!row.campName)continue;const key=row.region+'|'+String(row.campName).normalize('NFKC').trim().toLocaleLowerCase(),date=row._updatedAt||row.createdDate||row._date,old=campProfiles.get(key);if(!old||date>old.date)campProfiles.set(key,{date,status:row.status})}
+ let activeCamps=campProfiles.size?Array.from(campProfiles.values()).filter(row=>row.status==='active').length:null;
+ if(activeCamps===null){const snapshots=campRows.filter(row=>row.kind==='cumulative_snapshot'&&row.metric==='camps'&&row.status==='active'),latestByRegion=new Map();for(const row of snapshots){const end=row.periodEnd||row._date,old=latestByRegion.get(row.region);if(!old||end>old.end)latestByRegion.set(row.region,{end,count:Number(row.count)||0})}if(latestByRegion.size)activeCamps=Array.from(latestByRegion.values()).reduce((sum,row)=>sum+row.count,0)}
+ const distributedWater=waterArchive.filter(row=>['drinking','mineral','daily'].includes(row.waterType));
+ const archiveRows=[...reliefArchive,...waterArchive,...kitchenArchive,...awarenessArchive,...facilityRows,...sanitationRows,...campRows];
+ const dates=archiveRows.flatMap(row=>[row._date||row.date||row.createdDate,row.periodEnd||row.period_end||row._date||row.date||row.createdDate]).filter(value=>typeof value==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(value)).sort();
+ const latestReport=sql.prepare('SELECT date,payload FROM disaster_reports ORDER BY date DESC LIMIT 1').get();
+ const crossingStates=latestReport?JSON.parse(latestReport.payload).crossings||{}:{};
+ return out({families:numericSum(reliefArchive,'families'),familyRecords:reliefArchive.filter(row=>row.families!==null&&row.families!==undefined).length,waterLiters:numericSum(distributedWater,'liters'),waterRecords:distributedWater.length,activeFacilities,facilityRecords:facilityRows.length,facilityAsOf:activeFacilityGroups.size?Array.from(activeFacilityGroups.values()).map(group=>group.end).sort().at(-1)||null:null,activeCamps,campRecords:campRows.length,periodStart:dates[0]||null,periodEnd:dates.at(-1)||null,recordsCount:archiveRows.length,servicesWithRecords:[reliefArchive.length,waterArchive.length,kitchenArchive.length,awarenessArchive.length,facilityRows.length,sanitationRows.length,campRows.length].filter(count=>count>0).length,openCrossings:Object.values(crossingStates).filter(value=>value==='open').length,crossingReportDate:latestReport?.date||null});
+}
 if(p==='/api/community-records'||p==='/api/community-import')return handleCommunity(req,u);
 if(p==='/api/rehab-records'||p==='/api/rehab-import')return handleRehab(req,u);
 if(p==='/api/mental-health-records'||p==='/api/mental-health-import')return handleMentalHealth(req,u);
