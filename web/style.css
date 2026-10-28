@@ -402,3 +402,51 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:1100px){.ems-dashboard .ems-key-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.ems-dashboard-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.ems-dashboard-head{align-items:flex-start;flex-direction:column;padding:19px}.ems-dashboard-head-side{width:100%;justify-content:space-between}.ems-dashboard .grid-two{grid-template-columns:1fr}.ems-dashboard .ems-toolbar{width:100%}.ems-dashboard .ems-toolbar .btn{flex:1}}
 @media(max-width:600px){.ems-dashboard{gap:12px}.ems-dashboard-copy h1{font-size:22px}.ems-dashboard-head-side{align-items:stretch;flex-direction:column}.ems-period-badge{width:100%}.ems-dashboard .ems-key-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ems-dashboard .metric{min-height:100px;padding:12px 10px}.ems-dashboard .metric-label{font-size:11px}.ems-dashboard .metric-label .ico{width:32px;height:32px}.ems-dashboard .metric b{font-size:23px}.ems-quick-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.ems-quick-strip>div{padding:10px}.ems-quick-strip>div:nth-child(3){border-inline-start:0;border-top:1px solid #e7e9ec}.ems-quick-strip>div:nth-child(4){border-top:1px solid #e7e9ec}.ems-dashboard-filters{grid-template-columns:1fr}.ems-dashboard .ems-table-panel .panel-head{align-items:flex-start}.ems-dashboard .table-wrap{margin:0 8px}}
+
+
+/* EMS entry form aligned with the statistics dashboard */
+.ems-entry-page{display:flex;flex-direction:column;gap:17px;max-width:1500px;margin-inline:auto}
+.ems-entry-head{min-height:105px}
+.ems-entry-head .ems-dashboard-copy h1{font-size:25px}
+.ems-entry-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 14px;border:1px solid #e7d7da;border-radius:9px;background:#fffafb;color:#a92234;font-size:12px;font-weight:650;white-space:nowrap}
+.ems-entry-back .ico{width:17px;height:17px}
+.ems-entry-form{width:100%;max-width:none;overflow:hidden;padding:0;border:1px solid #e4e8ed;border-radius:16px;background:#fff;box-shadow:0 7px 22px #18253409}
+.ems-form-intro{display:flex;align-items:center;gap:13px;padding:17px 22px;border-bottom:1px solid #edf0f3;background:linear-gradient(100deg,#fff 0%,#fffafb 100%)}
+.ems-form-intro-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;background:#fff0f2;color:#c82032}
+.ems-form-intro-icon .ico{width:21px;height:21px}
+.ems-form-intro h2{margin:0;color:#263442;font-size:16px}
+.ems-form-intro p{margin:3px 0 0;color:#7d8894;font-size:11px}
+.ems-form-required{display:flex;align-items:center;gap:6px;margin-inline-start:auto;color:#788491;font-size:10px;white-space:nowrap}
+.ems-form-required i{width:7px;height:7px;border-radius:50%;background:#c82032}
+.ems-entry-form .ems-form-section{margin:0 22px;padding:20px 0;border-bottom:1px solid #edf0f2}
+.ems-form-section-head{display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.ems-form-step{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:11px;background:#fff0f2;color:#b42336;font-size:11px;font-weight:750}
+.ems-form-step.total{background:#eaf7ef;color:#168858;font-size:17px}
+.ems-form-section-head h2{margin:0;color:#263441;font-size:15px}
+.ems-form-section-head p{margin:2px 0 0;color:#87919b;font-size:10px}
+.ems-entry-form .ems-meta-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ems-entry-form .ems-meta-grid>div{min-width:0}
+.ems-entry-form .ems-meta-grid label,.ems-entry-form .ems-notes-section>label{display:block;margin:0 0 6px;color:#53616e;font-size:12px;font-weight:650}
+.ems-entry-form .control{min-height:43px;border:1px solid #dfe5ea;border-radius:9px;background:#fbfcfd;font-size:13px}
+.ems-entry-form .control:focus{border-color:#c74b5a;box-shadow:0 0 0 3px #c8203212}
+.ems-entry-form .ems-data-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ems-entry-form .ems-data-grid>div{min-width:0;padding:11px 12px;border:1px solid #e9edf1;border-radius:10px;background:#fafbfc;transition:border-color .15s,background .15s}
+.ems-entry-form .ems-data-grid>div:focus-within{border-color:#e7a2aa;background:#fff}
+.ems-entry-form .ems-data-grid label{display:flex;align-items:flex-start;min-height:35px;margin:0 0 7px;color:#4e5c69;font-size:11px;font-weight:650;line-height:1.5}
+.ems-entry-form .ems-data-grid .control{width:100%;text-align:left;font-variant-numeric:tabular-nums}
+.ems-totals-section{padding-bottom:21px!important}
+.ems-entry-form .ems-totals-grid{grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}
+.ems-total-card{padding:12px 13px;border:1px solid #dceee4;border-radius:10px;background:linear-gradient(135deg,#f6fcf8,#fff)}
+.ems-total-card label{display:block;min-height:31px;margin:0 0 5px;color:#4d6a5b;font-size:11px;font-weight:650}
+.ems-entry-form .ems-total-card .control{min-height:42px;border-color:#d7ebdf;background:#edf8f1;color:#14784d;font-size:20px;font-weight:750}
+.ems-edit-note{margin:10px 0 0;color:#7b8792;font-size:10px}
+.ems-entry-form .ems-notes-section{padding:18px 0 20px;border:0}
+.ems-entry-form .ems-notes-section>label small{margin-inline-start:5px;color:#929ba4;font-size:10px;font-weight:400}
+.ems-entry-form .ems-notes-section textarea{min-height:95px;padding:10px 12px;resize:vertical}
+.ems-entry-form .ems-entry-actions{display:flex;align-items:center;gap:9px;margin:0;padding:14px 22px;border-top:1px solid #eceff2;background:#fafbfc}
+.ems-entry-actions .btn{min-height:42px;padding:8px 17px;border-radius:9px;font-size:12px;font-weight:650}
+.ems-entry-actions .btn.primary{background:#c82032;border-color:#c82032;box-shadow:0 5px 14px #c820321d}
+.ems-entry-actions #ems-save-status{margin-inline-start:auto;color:#a92234;font-size:11px}
+@media(max-width:1050px){.ems-entry-form .ems-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.ems-entry-head{align-items:flex-start;flex-direction:column}.ems-entry-back{align-self:flex-start}.ems-entry-form .ems-meta-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ems-entry-form .ems-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.ems-entry-page{gap:12px}.ems-entry-head{padding:17px}.ems-entry-head .ems-dashboard-copy h1{font-size:21px}.ems-entry-form{border-radius:13px}.ems-form-intro{align-items:flex-start;padding:14px}.ems-form-required{display:none}.ems-entry-form .ems-form-section{margin:0 14px;padding:16px 0}.ems-entry-form .ems-meta-grid,.ems-entry-form .ems-data-grid{grid-template-columns:1fr;gap:8px}.ems-entry-form .ems-data-grid>div{padding:10px}.ems-entry-form .ems-data-grid label{min-height:0}.ems-entry-form .ems-entry-actions{flex-wrap:wrap;padding:12px 14px}.ems-entry-actions .btn{flex:1}.ems-entry-actions #ems-save-status{flex-basis:100%;margin:0}}
