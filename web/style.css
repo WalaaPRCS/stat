@@ -537,7 +537,7 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 @media(max-width:700px){.relief-quantities-scroll{max-height:52vh}.relief-quantities-scroll table{min-width:620px}}
 
 /* Consistent action grouping across disaster subpages */
-.disaster-subpage-head{justify-content:space-between;align-items:center;gap:24px}
+.disaster-subpage-head{justify-content:flex-start;align-items:center;gap:18px}
 .disaster-subpage-head .disaster-service-toolbar{display:flex;align-items:center;justify-content:flex-start;gap:9px;flex:0 0 auto;flex-wrap:wrap;max-width:min(62%,760px)}
 .disaster-subpage-head .disaster-service-toolbar>.btn,
 .disaster-subpage-head .disaster-service-toolbar>button,
@@ -588,3 +588,5 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
  .disaster-service-page .page-actions>.btn{width:100%;white-space:normal}
  .disaster-service-page .panel-head{flex-direction:column;align-items:flex-start}
 }
+
+.disaster-subpage-head .ems-dashboard-copy{flex:0 1 auto}.disaster-subpage-head .disaster-service-toolbar{margin-inline-start:0}
