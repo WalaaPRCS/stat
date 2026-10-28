@@ -72,3 +72,15 @@ main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,ma
 .qd-total{margin:2px 0 10px;font-size:25px}
 @media(max-width:800px){.qd-highlight{min-height:110px;padding:13px}.qd-row{grid-template-columns:minmax(0,1fr) 58px}.qd-panel{padding:15px}}
 @media(max-width:520px){.qd-highlights{grid-template-columns:1fr}.qd-highlight{min-height:94px;grid-template-columns:40px minmax(0,1fr);padding:12px}.qd-highlight-icon{width:38px;height:38px}.qd-panel-heading{align-items:flex-start}}
+
+/* Final Quds report polish: keep procedure names prominent and chart actions easy to spot. */
+.qd-highlight{min-height:132px;padding:18px 20px;border-radius:16px}
+.qd-highlight>span:not(.qd-highlight-icon){font-size:14px;font-weight:750}
+.qd-highlight>b{font-size:30px}
+.qd-panel-heading{margin-bottom:12px}
+.qd-open-hint{padding:6px 10px;border:1px solid #f0d7db;border-radius:999px;background:#fff5f6;font-size:12px}
+.qd-row{grid-template-columns:minmax(0,1fr) 64px;grid-template-areas:"label label" "bar count";row-gap:9px;padding:12px 0}
+.qd-row>span{display:block;min-width:0;max-width:100%;font-size:14px;font-weight:600;line-height:1.65;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:normal}
+.qd-row>i{height:8px}
+.qd-total{font-size:27px}
+@media(max-width:800px){.qd-highlight{min-height:116px;padding:14px}.qd-highlight>b{font-size:25px}.qd-row{grid-template-columns:minmax(0,1fr) 58px}}
