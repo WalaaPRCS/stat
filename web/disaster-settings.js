@@ -8,4 +8,4 @@ main.querySelectorAll('[data-setting-tab]').forEach(b=>b.onclick=()=>{state.type
 const beforeDisasterSettingsRender=render;render=function(){beforeDisasterSettingsRender();if(Account.ready&&!DBState.loading&&location.hash==='#disaster-settings'){disasterSettingsPage();document.getElementById('breadcrumb').textContent='الرئيسية / مواجهة الكوارث / إعدادات القسم'}};render();
 const disasterImportScript=document.createElement('script');disasterImportScript.src='/disaster-import.js?v=20261027-3';document.body.append(disasterImportScript);
 
-const kitchenScript=document.createElement('script');kitchenScript.src='/kitchens.js?v=20261012-5';document.body.append(kitchenScript);
+const kitchenScript=document.createElement('script');kitchenScript.src='/kitchens.js?v=20261028-subservices-1';document.body.append(kitchenScript);
