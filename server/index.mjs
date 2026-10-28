@@ -89,7 +89,7 @@ if(p==='/api/hospital-activity-records')return handleHospitalActivity(req,u);
 if(p==='/api/disaster-service-records')return handleDisasterServiceRecords(req,u);
 if(p==='/api/disaster-dashboard'){
  const parseRows=(table,withDate=false)=>sql.prepare('SELECT '+(withDate?'date,updated_at,':'')+'payload FROM '+table).all().map(row=>({...JSON.parse(row.payload),...(withDate?{_date:row.date,_updatedAt:row.updated_at}:{})}));
- const reliefArchive=parseRows('relief_summaries',true),waterArchive=parseRows('water_summaries',true),kitchenArchive=parseRows('kitchen_summaries',true),awarenessArchive=parseRows('awareness_summaries',true);
+ const reliefArchive=parseRows('relief_summaries'),waterArchive=parseRows('water_summaries'),kitchenArchive=parseRows('kitchen_summaries'),awarenessArchive=parseRows('awareness_summaries');
  const facilityRows=sql.prepare("SELECT date,updated_at,payload FROM disaster_service_records WHERE service='health-facilities'").all().map(row=>({...JSON.parse(row.payload),_date:row.date,_updatedAt:row.updated_at}));
  const sanitationRows=sql.prepare("SELECT date,payload FROM disaster_service_records WHERE service='sanitation'").all().map(row=>({...JSON.parse(row.payload),_date:row.date}));
  const campRows=sql.prepare("SELECT date,updated_at,payload FROM disaster_service_records WHERE service='camps'").all().map(row=>({...JSON.parse(row.payload),_date:row.date,_updatedAt:row.updated_at}));
