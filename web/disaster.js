@@ -30,8 +30,8 @@ camps:[['تجمعات النزوح العاملة',a.activeCamps,'تجمع']]
 };
 const services=disasterServices.map(service=>{
  const href=service.href||'#disaster-service/'+service.id;
- const stats=cardStats[service.id]||service.keys.slice(0,3).map(key=>{const m=disasterMetrics.find(item=>item[0]===key);return m?[key,m[1],m[2]]:null}).filter(Boolean);
- const content=stats.length?stats.map((row,i)=>{const label=row.length===3?row[0]:row[1],n=row.length===3?row[1]:latest?.cumulative?.[row[0]],unit=row.length===3?row[2]:'';return `<div class="disaster-card-stat"><span>${esc(label)}</span><b>${latest||row.length===3?value(n):'—'} <small>${esc(unit)}</small></b></div>`}).join(''):`<div class="disaster-card-empty"><span class="ico">${icon(service.icon)}</span><span>افتح الخدمة لمراجعة سجلاتها وتفاصيلها</span></div>`;
+ const stats=cardStats[service.id]||service.keys.slice(0,3).map(key=>{const m=disasterMetrics.find(item=>item[0]===key);return m?[m[1],latest?.cumulative?.[key],m[2]]:null}).filter(Boolean);
+ const content=stats.length?stats.map(([label,n,unit])=>`<div class="disaster-card-stat"><span>${esc(label)}</span><b>${value(n)} <small>${esc(unit)}</small></b></div>`).join(''):`<div class="disaster-card-empty"><span class="ico">${icon(service.icon)}</span><span>افتح الخدمة لمراجعة سجلاتها وتفاصيلها</span></div>`;
  return `<a class="disaster-service-card" href="${href}"><span class="disaster-card-icon">${icon(service.icon)}</span><span class="disaster-card-content"><span class="disaster-card-title">${esc(service.name)}<span aria-hidden="true">←</span></span><span class="disaster-card-desc">${esc(service.desc)}</span><span class="disaster-card-stats">${content}</span></span></a>`;
 }).join('');
 const openCrossings=latest?a.openCrossings??0:null;
