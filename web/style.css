@@ -743,3 +743,17 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 .cath-modal-backdrop,.maw-modal-backdrop,.amal-detail-backdrop{backdrop-filter:blur(3px)}
 @media(max-width:800px){.home-kpi-section .health-module-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.home-kpi-section .health-module-card{min-height:88px;padding:12px}}
 @media(max-width:560px){.home-kpi-heading{align-items:flex-start;flex-direction:column}.home-kpi-section .health-module-cards{grid-template-columns:1fr}.home-health-entry{align-items:flex-start;flex-direction:column}.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}}
+
+/* Homepage spacing repair and shared Special Reports finish */
+.home-kpi-section{gap:12px;margin-bottom:8px}
+.home-kpi-section .health-module-note{position:static;display:block;margin:4px 0 0!important;padding:8px 4px 0;border-top:1px solid #e9edf1;color:#768291;font-size:11px;line-height:1.65}
+.home-kpi-section .health-module-card{min-height:124px;display:flex;flex-direction:column;justify-content:center}
+.home-map-layout{margin-top:4px}
+.cath-metrics,.maw-stats,.amal-metrics,.qd-highlights{gap:14px;margin-block:14px}
+.cath-page-head~.tabs,.maw-tabs,.amal-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;padding:6px;border:1px solid #e6e9ee;border-radius:14px;background:#fff;box-shadow:0 4px 14px #18253406}
+.cath-page-head~.tabs button,.maw-tabs button,.amal-tabs button{min-height:40px;padding:9px 16px;border:1px solid transparent;border-radius:10px;background:transparent;color:#66717d;font-weight:700;transition:background .16s,border-color .16s,color .16s}
+.cath-page-head~.tabs button.active,.maw-tabs button.active,.amal-tabs button.active{border-color:#f2d8dc;background:#fff4f5;color:#b82033;box-shadow:0 2px 8px #b8203310}
+.cath-page-head~.panel,.maw-page-head~.panel,.amal-head~.panel,.qd-head~.qd-panel{border:1px solid #e6e9ee;border-radius:14px;background:#fff;box-shadow:0 5px 18px #18253408}
+.cath-page-head~.panel .panel-head,.maw-page-head~.panel .panel-head,.amal-head~.panel .panel-head,.qd-head~.qd-panel .panel-head{border-bottom:1px solid #edf0f3}
+.cath-page-head,.maw-page-head,.amal-head,.qd-head{box-shadow:0 5px 18px #18253408}
+@media(max-width:700px){.home-kpi-section .health-module-cards{grid-template-columns:1fr}.home-kpi-section .health-module-card{min-height:100px}.cath-page-head~.tabs,.maw-tabs,.amal-tabs{gap:6px}.cath-page-head~.tabs button,.maw-tabs button,.amal-tabs button{flex:1 1 auto;padding:8px 11px}}
