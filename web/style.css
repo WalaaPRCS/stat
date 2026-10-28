@@ -590,3 +590,9 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 }
 
 .disaster-subpage-head .ems-dashboard-copy{flex:0 1 auto}.disaster-subpage-head .disaster-service-toolbar{margin-inline-start:0}
+
+/* Anchor service actions to the left edge; the page heading stays on the right (RTL). */
+.disaster-subpage-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;justify-content:stretch}
+.disaster-subpage-head>.ems-dashboard-copy{grid-column:1;grid-row:1}
+.disaster-subpage-head>.disaster-service-toolbar{grid-column:2;grid-row:1;justify-self:start;max-width:min(62vw,760px)}
+@media(max-width:900px){.disaster-subpage-head{display:flex;flex-direction:column;align-items:flex-start}.disaster-subpage-head>.disaster-service-toolbar{width:100%;max-width:100%}}
