@@ -44,3 +44,6 @@ main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,ma
 .amal-error,.maw-error,.cath-error{border-radius:10px}
 @media(max-width:800px){.cath-page-head,.maw-page-head,.amal-head,.qd-head{align-items:flex-start;flex-direction:column;padding:19px}.cath-metrics,.maw-stats,.amal-metrics,.qd-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}.qd-grid{grid-template-columns:1fr}}
+
+/* Special Reports design refresh: primary care red header and compact forms */
+.special-report-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;color:#b32235;font-size:12px;font-weight:750}.special-report-kicker i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
