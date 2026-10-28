@@ -687,3 +687,25 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 .hospital-overview .hospital-filter-toolbar{margin:0}
 @media(max-width:1150px){.hospital-overview .hospital-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.home-phc-design>.page-head{align-items:flex-start;flex-direction:column;padding:20px}.hospital-overview .hospital-card-grid{grid-template-columns:1fr}}
+
+/* Hospital hub aligned with the PHC overview */
+.hospital-hub{max-width:1600px;margin-inline:auto;gap:18px}
+.hospital-hub .hospital-hub-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:132px;overflow:hidden;margin:0;padding:23px 26px;border:1px solid #e7e9ed;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#fff 73%,#fff5f6 100%);box-shadow:0 8px 24px #1825340a}
+.hospital-hub .hospital-hub-head:before{position:absolute;inset:0 auto 0 0;width:7px;background:linear-gradient(180deg,#c82032,#e66b78);content:""}
+.hospital-hub .hospital-hub-title{position:relative;z-index:1}.hospital-hub .hospital-hub-title h1{margin:0;color:#1c2836;font-size:27px;line-height:1.4}.hospital-hub .hospital-hub-title .subtitle{margin:5px 0 0;color:#75808e}
+.hospital-hub .hospital-hub-actions{position:relative;z-index:2}
+.hospital-hub .hospital-hub-summary.phc-overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hospital-hub .hospital-hub-summary .phc-overview-metric{min-height:108px}
+.hospital-hub .hospital-insights{gap:14px}.hospital-hub .hospital-insight-panel{padding:17px;border:1px solid #e4e8ed;border-radius:14px;background:#fff;box-shadow:0 4px 14px #18253406}
+.hospital-hub .hospital-insight-heading h2{color:#202e3c;font-size:18px}.hospital-hub .hospital-insight-heading p{font-size:12px}
+.hospital-hub .hospital-list-toolbar{margin:0}
+.hospital-hub .hospital-facility-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.hospital-hub .hospital-facility-card{min-height:0;position:relative;display:flex;flex-direction:column;overflow:hidden;border:1px solid #e3e8ed;border-top:3px solid #16965f;border-radius:14px;background:#fff;box-shadow:0 5px 17px #18253408;transition:transform .18s,border-color .18s,box-shadow .18s}
+.hospital-hub .hospital-facility-card:hover{transform:translateY(-3px);border-color:#cbd9df;box-shadow:0 12px 25px #18253412}
+.hospital-hub .hospital-facility-card .phc-clinic-card-actions a{position:static;inset:auto!important}
+.hospital-hub .hospital-facility-card .phc-clinic-card-actions a span{position:static!important}
+.hospital-hub .hospital-facility-card .phc-clinic-card-actions{margin-top:auto}
+.hospital-hub .hospital-facility-card .clinic-status{font-size:11px}
+@media(max-width:1150px){.hospital-hub .hospital-facility-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.hospital-hub .hospital-hub-head{align-items:flex-start;flex-direction:column;padding:20px}.hospital-hub .hospital-hub-actions{width:100%}.hospital-hub .hospital-hub-summary.phc-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.hospital-hub .hospital-facility-grid,.hospital-hub .hospital-hub-summary.phc-overview-metrics{grid-template-columns:1fr}.hospital-hub .hospital-hub-head h1{font-size:23px}}
