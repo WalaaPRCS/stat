@@ -64,5 +64,82 @@ main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,ma
 @media(max-width:800px){.cath-page-head,.maw-page-head,.amal-head,.qd-head{align-items:flex-start;flex-direction:column;padding:19px}.cath-metrics,.maw-stats,.amal-metrics,.qd-highlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}.qd-grid{grid-template-columns:1fr}}
 
+/* Cardiac catheterization and operations report refresh */
+.cath-hero{display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:18px;min-height:162px;margin-bottom:18px;padding:24px 28px;border:0;border-radius:20px;background:linear-gradient(115deg,#7f1829 0%,#a61f33 58%,#c63246 100%);box-shadow:0 12px 28px #7f182925;color:#fff;overflow:hidden}
+.cath-hero:before{inset:auto -65px -140px auto;width:330px;height:330px;border:1px solid #ffffff26;border-radius:50%;background:radial-gradient(circle,#ffffff18 0 34%,transparent 35%);box-shadow:0 0 0 30px #ffffff08,0 0 0 70px #ffffff06}
+.cath-hero-icon{display:grid;place-items:center;width:60px;height:60px;border:1px solid #ffffff44;border-radius:18px;background:#ffffff18;color:#fff}
+.cath-hero-icon svg{width:31px;height:31px}
+.cath-hero-copy{position:relative;z-index:1}
+.cath-hero .special-report-kicker{color:#fff;font-size:13px}
+.cath-hero .special-report-kicker i{background:#8be0b4;box-shadow:0 0 0 5px #ffffff1c}
+.cath-hero h1{color:#fff;font-size:clamp(1.7rem,3vw,2.3rem);letter-spacing:-.02em}
+.cath-hero .subtitle{margin-top:6px;color:#ffe9ec;font-size:14px}
+.cath-hero-badge{position:relative;z-index:1;display:grid;gap:6px;min-width:150px;padding:12px 16px;border:1px solid #ffffff40;border-radius:14px;background:#ffffff18;color:#fff}
+.cath-hero-badge span{font-size:11px;color:#ffe9ec}
+.cath-hero-badge b{font-size:17px;direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+.cath-privacy{margin-bottom:16px;border-inline-start:4px solid #c82032;border-radius:10px;background:#fff8f8;color:#596575}
+.cath-main-tabs{width:max-content;max-width:100%;margin:0 0 18px;padding:5px;border:1px solid #e4e8ed;border-radius:13px;background:#f3f5f7}
+.cath-main-tabs button{min-width:150px;min-height:42px;border:0;border-radius:9px;color:#687582;font-weight:700;transition:background .18s,color .18s,box-shadow .18s}
+.cath-main-tabs button.active{background:#fff;color:#a82032;box-shadow:0 3px 10px #17233215}
+.cath-metrics{gap:15px;margin:0 0 18px}
+.cath-metrics .metric{position:relative;min-height:130px;padding:18px 20px;border:1px solid #e5e9ee;border-inline-start:5px solid #c82032;border-radius:16px;background:linear-gradient(145deg,#fff,#fffafa);box-shadow:0 7px 20px #1723320a}
+.cath-metrics .metric:nth-child(2){border-inline-start-color:#16865a}
+.cath-metrics .metric:nth-child(3){border-inline-start-color:#c47a28}
+.cath-metrics .metric:nth-child(4){border-inline-start-color:#397daf}
+.cath-metrics .metric-label{font-size:13px;font-weight:700;color:#66717d}
+.cath-metrics .metric b{display:block;margin:8px 0 2px;font-size:29px;color:#202d3a;font-variant-numeric:tabular-nums}
+.cath-metrics .metric small{font-size:11px;color:#85909d}
+.cath-filters,.ops-filter-panel{margin-bottom:18px;border:1px solid #e4e8ed;border-radius:15px;background:#fff;box-shadow:0 6px 18px #18253408}
+.cath-filters{padding:16px 18px}
+.cath-grid{gap:16px}
+.cath-panel{border:1px solid #e4e8ed;border-radius:16px;box-shadow:0 6px 18px #18253408}
+.cath-panel .panel-head{padding-bottom:12px;border-bottom:1px solid #edf0f3}
+.cath-panel .panel-head h2{font-size:16px;color:#253343}
+.cath-bar-row{display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(100px,2fr) 64px;gap:12px;padding:11px 0;border-bottom:1px solid #f0f2f4}
+.cath-bar-row>span{width:auto;flex:initial;line-height:1.5;color:#465465}
+.cath-bar-row>b{width:auto;min-width:55px;padding:5px 8px;border-radius:9px;background:#fff1f3;color:#a82032;text-align:center;font-variant-numeric:tabular-nums}
+.cath-bar-row .bar-track{height:9px;border-radius:999px;background:#f5e8ea}
+.cath-bar-row .bar-track i{border-radius:999px;background:linear-gradient(90deg,#d34a5b,#95192b)}
+.cath-daily-archive{overflow:hidden}
+.cath-daily-archive .panel-head small,.ops-table-card .panel-head small{display:block;max-width:720px;margin-top:4px;line-height:1.6;color:#778493}
+.cath-wide-table{max-height:68vh;border:1px solid #e6e9ed;border-radius:12px;overflow:auto}
+.cath-wide-table th{position:sticky;top:0;z-index:1;background:#f7f8fa;color:#596675;font-size:12px}
+.cath-wide-table td{font-variant-numeric:tabular-nums}
+.cath-date-link{display:inline-flex;padding:5px 8px;border-radius:7px;background:#fff1f3;color:#a82032;text-decoration:none}
+.cath-pagination{background:#fbfcfd}
+.cath-upload,.cath-entry-panel{padding:18px 20px;border:1px solid #e4e8ed;border-radius:15px;background:#fff;box-shadow:0 6px 18px #18253408}
+.cath-upload{margin-bottom:16px}
+.cath-entry-bar h2,.cath-upload h2{font-size:17px;color:#253343}
+.cath-entry-bar .btn,.cath-upload .btn,.cath-preview-actions .btn{min-height:40px;border-radius:9px}
+.cath-preview{border:1px solid #e1e7ed;border-radius:13px;background:#fbfcfd}
+.ops-summary-band{margin:0 0 18px}
+.ops-summary-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 2px 10px;color:#273544}
+.ops-summary-title span{font-size:16px;font-weight:800}
+.ops-summary-title small{color:#7a8795;font-size:12px}
+.ops-metrics{margin:0}
+.ops-metrics .metric-label{display:flex;align-items:center;gap:8px}
+.ops-metric-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#fff1f3;color:#b32235}
+.ops-metric-icon svg{width:17px;height:17px}
+.ops-metrics .metric:nth-child(2) .ops-metric-icon{background:#eaf7f0;color:#16865a}
+.ops-metrics .metric:nth-child(3) .ops-metric-icon{background:#fff4e7;color:#bd7725}
+.ops-metrics .metric:nth-child(4) .ops-metric-icon{background:#edf5fb;color:#397daf}
+.ops-filter-panel{padding:18px}
+.ops-filter-panel .panel-head{margin-bottom:14px}
+.ops-filter-panel .panel-head small{display:block;margin-top:3px;color:#7a8795}
+.ops-filter-panel .ops-filters{padding:0;border:0;background:transparent;box-shadow:none}
+.ops-reset{white-space:nowrap;border-color:#eadadd;color:#a82032}
+.ops-charts{gap:16px;margin:0 0 18px}
+.ops-charts .cath-panel{min-width:0}
+.ops-table-card{overflow:hidden}
+.ops-table-card .panel-head{align-items:center}
+.ops-picker>summary{font-weight:700}
+.ops-pivot-table thead tr:first-child th{background:#f7e9ec;color:#8a2030}
+.ops-pivot-table tbody tr:hover{background:#fffafa}
+.ops-pivot-table td b{color:#a82032}
+.ops-detail-modal{border-top:5px solid #c82032}
+@media(max-width:900px){.ops-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.cath-hero{grid-template-columns:54px minmax(0,1fr);padding:22px}.cath-hero-badge{grid-column:2;justify-self:start;min-width:0;padding:8px 12px}.cath-hero-icon{width:52px;height:52px}}
+@media(max-width:700px){.cath-hero{gap:12px;padding:18px}.cath-hero h1{font-size:23px}.cath-main-tabs{width:100%}.cath-main-tabs button{flex:1;min-width:0}.cath-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cath-metrics .metric{min-height:112px;padding:14px}.cath-metrics .metric b{font-size:25px}.cath-bar-row{grid-template-columns:minmax(0,1fr) 58px}.cath-bar-row .bar-track{grid-column:1/-1;grid-row:2}.ops-filter-panel{padding:14px}.ops-filter-panel .panel-head{align-items:flex-start;flex-direction:column}.ops-summary-title{align-items:flex-start;flex-direction:column;gap:2px}}
+@media(max-width:420px){.cath-hero{grid-template-columns:44px minmax(0,1fr);padding:15px}.cath-hero-icon{width:42px;height:42px;border-radius:13px}.cath-hero-icon svg{width:24px;height:24px}.cath-hero-badge{grid-column:1/-1;margin-inline-start:56px}.cath-metrics{grid-template-columns:1fr}.ops-filters{grid-template-columns:1fr}.ops-search{grid-column:auto}}
+
 /* Special Reports design refresh: primary care red header and compact forms */
 .special-report-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;color:#b32235;font-size:12px;font-weight:750}.special-report-kicker i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
