@@ -2,6 +2,71 @@
 @media(max-width:800px){.maw-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.maw-preview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.maw-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.maw-page-head{align-items:flex-start;flex-direction:column}.maw-bar>span{width:125px}}
 @media(max-width:520px){.maw-filters{grid-template-columns:1fr}.maw-entry-head{align-items:flex-start;flex-direction:column}.maw-fields,.maw-baby-details .maw-fields{grid-template-columns:1fr}.maw-date-field{align-items:stretch;flex-direction:column;gap:6px}.maw-date-field small{padding:0}.maw-save-row{flex-wrap:wrap}.maw-pager{align-items:flex-start;flex-direction:column}.maw-pager>div{margin:0}.maw-modal-backdrop{padding:8px}.maw-modal{width:100%;max-height:96vh;padding:12px}.maw-preview-grid{grid-template-columns:1fr}}
 
+/* Match Al-Amal Mawasi reports to the EMS dashboard components. */
+.maw-dashboard{display:flex;flex-direction:column;gap:17px;max-width:1600px;margin-inline:auto}
+.maw-dashboard .maw-dashboard-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:105px;overflow:hidden;margin:0;padding:21px 25px;border:1px solid #e5e8ed;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#fff 72%,#fff5f6 100%);box-shadow:0 8px 24px #1825340a}
+.maw-dashboard .maw-dashboard-head:before{position:absolute;inset:0 auto 0 0;width:7px;height:auto;border-radius:0;background:linear-gradient(180deg,#c82032,#e56b77);content:""}
+.maw-dashboard .ems-dashboard-copy h1{margin:0;color:#1c2836;font-size:26px;line-height:1.4}
+.maw-dashboard .ems-dashboard-copy p{margin:5px 0 0;color:#75808e;font-size:13px}
+.maw-dashboard .ems-dashboard-kicker{margin:0 0 4px;color:#b42336;font-size:12px}
+.maw-dashboard .maw-page-actions{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin:0}
+.maw-dashboard .maw-page-actions .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 13px;border-radius:9px;font-size:12px;white-space:nowrap}
+.maw-dashboard .maw-page-actions .btn.primary{background:#c82032;border-color:#c82032;box-shadow:0 5px 14px #c8203222}
+.maw-dashboard .maw-import-panel,.maw-dashboard .maw-entry-panel{margin:0;padding:17px 19px;border:1px solid #e5e9ee;border-radius:15px;background:#fff;box-shadow:0 5px 18px #18253407}
+.maw-dashboard .maw-import-panel{padding:0;overflow:hidden}
+.maw-dashboard .maw-import-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;color:#53616e;cursor:pointer;list-style:none}
+.maw-dashboard .maw-import-summary::-webkit-details-marker{display:none}
+.maw-dashboard .maw-import-summary span{display:grid;gap:2px}
+.maw-dashboard .maw-import-summary b{font-size:12px}
+.maw-dashboard .maw-import-summary small{color:#87919c;font-size:10px}
+.maw-dashboard .maw-import-plus{color:#b42336;font-size:17px;transition:transform .15s ease}
+.maw-dashboard .maw-import-panel[open]>.maw-import-summary{border-bottom:1px solid #edf0f2;background:#fffafb}
+.maw-dashboard .maw-import-panel[open]>.maw-import-summary>.maw-import-plus{transform:rotate(45deg)}
+.maw-dashboard .maw-import-body{padding:16px 18px}
+.maw-dashboard .maw-entry-head h2{margin:0;color:#263441;font-size:15px}
+.maw-dashboard .maw-entry-head p,.maw-dashboard .maw-note{color:#87919c;font-size:11px;line-height:1.65}
+.maw-dashboard .maw-tabs{display:flex;width:max-content;max-width:100%;gap:4px;margin:0;padding:4px;border:1px solid #e5e9ee;border-radius:10px;background:#f4f6f8}
+.maw-dashboard .maw-tabs button{min-width:135px;min-height:40px;padding:8px 14px;border:0;border-radius:7px;color:#687582;font-size:12px}
+.maw-dashboard .maw-tabs button.active{background:#fff;color:#b42336;box-shadow:0 2px 7px #18253412}
+.maw-dashboard .maw-filters{display:block;margin:0;padding:15px 17px;border:1px solid #e5e9ee;border-radius:14px;background:#fff;box-shadow:0 4px 15px #18253406}
+.maw-dashboard .maw-filters .ems-section-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.maw-dashboard .maw-filters .ems-section-title h2{margin:0;color:#263441;font-size:15px}
+.maw-dashboard .maw-filters .ems-section-title p{margin:2px 0 0;color:#87919c;font-size:10px}
+.maw-dashboard .maw-filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:end;gap:10px;margin:0}
+.maw-dashboard .maw-filter-grid label{display:flex;flex-direction:column;gap:4px;color:#64717e;font-size:11px}
+.maw-dashboard .maw-filter-grid .control{min-height:40px;border:1px solid #dfe5ea;border-radius:8px;background:#fbfcfd;font-size:12px}
+.maw-dashboard .maw-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0}
+.maw-dashboard .maw-stats .metric{position:relative;min-width:0;min-height:115px;overflow:hidden;padding:16px 17px;border:1px solid #e5e9ee;border-inline-start:4px solid #c82032;border-radius:15px;background:#fff;box-shadow:0 5px 18px #18253408;transition:transform .18s ease,box-shadow .18s ease}
+.maw-dashboard .maw-stats .metric:hover{transform:translateY(-2px);box-shadow:0 10px 24px #18253411}
+.maw-dashboard .maw-stats .metric:after{position:absolute;inset:auto auto 0 0;width:68px;height:50px;border-radius:0 42px 0 0;background:#fff0f2;content:""}
+.maw-dashboard .maw-stats .metric:nth-child(3n+2){border-inline-start-color:#15965e}.maw-dashboard .maw-stats .metric:nth-child(3n+2):after{background:#eaf8f0}
+.maw-dashboard .maw-stats .metric:nth-child(3n){border-inline-start-color:#d88727}.maw-dashboard .maw-stats .metric:nth-child(3n):after{background:#fff5e5}
+.maw-dashboard .maw-stats .metric-label{position:relative;z-index:1;color:#5c6570;font-size:13px;font-weight:650}
+.maw-dashboard .maw-stats .metric b{position:relative;z-index:1;display:block;margin-top:4px;color:#202a35;font-size:29px;line-height:1.25;font-variant-numeric:tabular-nums}
+.maw-dashboard .maw-top,.maw-dashboard .maw-table-panel{overflow:hidden;margin:0;border:1px solid #e5e9ee;border-radius:15px;background:#fff;box-shadow:0 5px 18px #18253407}
+.maw-dashboard .maw-top .panel-head,.maw-dashboard .maw-table-panel .panel-head{padding:15px 17px;border-bottom:1px solid #edf0f2}
+.maw-dashboard .maw-top .panel-head h2,.maw-dashboard .maw-table-panel .panel-head h2{margin:0;color:#263441;font-size:15px}
+.maw-dashboard .maw-top .panel-body{padding:10px 18px 18px}
+.maw-dashboard .maw-bar{min-height:41px;margin:0;padding:9px 0;border-bottom:1px solid #f0f2f4}
+.maw-dashboard .maw-bar:last-child{border-bottom:0}
+.maw-dashboard .maw-bar>span{color:#455361;font-size:12px}
+.maw-dashboard .maw-bar .bar-track{height:7px;background:#edf0f2}
+.maw-dashboard .maw-bar .bar-track i{border-radius:99px;background:linear-gradient(90deg,#e58b95,#c82032)}
+.maw-dashboard .maw-bar>b{color:#263644;font-size:12px}
+.maw-dashboard .maw-table-tools{display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;color:#87919c;font-size:11px}
+.maw-dashboard .maw-columns>summary{border-color:#e3e7ec;border-radius:8px;background:#fff;color:#53616e;font-size:11px}
+.maw-dashboard .maw-table{margin:0 14px;border:1px solid #e7eaee;border-radius:10px}
+.maw-dashboard .maw-table table{min-width:680px}
+.maw-dashboard .maw-table thead th{background:#f7f8fa!important;color:#55616d!important;font-size:11px}
+.maw-dashboard .maw-table td{font-size:11px}
+.maw-dashboard .maw-date{color:#b42336;font-size:11px}
+.maw-dashboard .maw-pager{margin:0 14px;padding:13px 0;border-top:0;color:#87919c;font-size:11px}
+.maw-dashboard .maw-pager .control{min-height:34px;border:1px solid #dfe5ea;border-radius:8px;background:#fbfcfd}
+.maw-dashboard .maw-pager .btn,.maw-dashboard .maw-add,.maw-dashboard .maw-save-row .btn{min-height:38px;border-radius:8px;font-size:12px}
+.maw-dashboard .maw-error{border:1px solid #f1dadd;border-radius:10px;background:#fff5f6;color:#a61b30;font-size:12px}
+@media(max-width:800px){.maw-dashboard .maw-dashboard-head{align-items:flex-start;flex-direction:column;padding:19px}.maw-dashboard .maw-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.maw-dashboard .maw-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.maw-dashboard .maw-table{margin:0 8px}.maw-dashboard .maw-pager{margin:0 8px}}
+@media(max-width:560px){.maw-dashboard{gap:12px}.maw-dashboard .ems-dashboard-copy h1{font-size:22px}.maw-dashboard .maw-filter-grid{grid-template-columns:1fr}.maw-dashboard .maw-stats{gap:8px}.maw-dashboard .maw-stats .metric{min-height:100px;padding:12px 10px}.maw-dashboard .maw-stats .metric-label{font-size:11px}.maw-dashboard .maw-stats .metric b{font-size:23px}.maw-dashboard .maw-tabs{width:100%}.maw-dashboard .maw-tabs button{flex:1;min-width:0}.maw-dashboard .maw-entry-head{align-items:flex-start;flex-direction:column}.maw-dashboard .maw-table-tools{align-items:flex-start;flex-direction:column}}
+
 /* Shared look for pages under Special Reports */
 main:has(.cath-page-head),main:has(.maw-page-head),main:has(.amal-head),main:has(.qd-head){display:block}
 main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,main:has(.qd-head)>*{--special-red:#c82032}
