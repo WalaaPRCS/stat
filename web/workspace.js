@@ -1,10 +1,10 @@
 'use strict';
 let workspaceMode='staff';
-const workSections=[['المستشفيات','entry','hospital-records','hospital'],['إحصائية مستشفى القدس','quds-daily','quds-daily','hospital'],['القسطرة القلبية','cardiac-cath','cardiac-cath','health'],['مستشفى المواصي','mawasi','mawasi','hospital'],['الرعاية الصحية الأولية','phc-entry','phc','health'],['الإسعاف والطوارئ','ems-entry','ems','health'],['مواجهة الكوارث','sector-entry/disaster','disaster','disaster'],['التأهيل المجتمعي','sector-entry/rehab','sector-view/rehab','community'],['الصحة النفسية','sector-entry/mental','sector-view/mental','community'],['العمل المجتمعي','sector-entry/social','sector-view/social','community'],['الشباب والمتطوعون','sector-entry/youth','sector-view/youth','community']];
+const workSections=[['المستشفيات','entry','hospital-records','hospital'],['إحصائية مستشفى القدس','quds-daily','quds-daily','hospital'],['القسطرة القلبية','cardiac-cath','cardiac-cath','health'],['مستشفى المواصي','mawasi','mawasi','hospital'],['مستشفى الشمال الميداني','north','north','hospital'],['الرعاية الصحية الأولية','phc-entry','phc','health'],['الإسعاف والطوارئ','ems-entry','ems','health'],['مواجهة الكوارث','sector-entry/disaster','disaster','disaster'],['التأهيل المجتمعي','sector-entry/rehab','sector-view/rehab','community'],['الصحة النفسية','sector-entry/mental','sector-view/mental','community'],['العمل المجتمعي','sector-entry/social','sector-view/social','community'],['الشباب والمتطوعون','sector-entry/youth','sector-view/youth','community']];
 const communityModels={rehab:'التأهيل المجتمعي',mental:'الصحة النفسية',social:'العمل المجتمعي',youth:'الشباب والمتطوعون',disaster:'مواجهة الكوارث'};
 let specialReportsOpen=false;
 function workNav(hash){
-const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal'];
+const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
 const reports=workSections.filter(([,input,view])=>reportRoutes.includes(view));
 const activeReport=reports.some(([,input,view])=>view===hash);
 if(activeReport)specialReportsOpen=true;
