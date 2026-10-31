@@ -2,6 +2,8 @@ import {createInflateRaw} from 'node:zlib';
 import {Readable} from 'node:stream';
 import {createInterface} from 'node:readline';
 import {createHash,randomBytes} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 
 const clean=v=>v==null?'':String(v).trim();
 const norm=v=>clean(v).replace(/\s+/g,' ').slice(0,180)||'غير محدد';
@@ -48,6 +50,11 @@ export async function extractNorth(zip,filename='north-hospital.zip'){
 const add=(rows,keyName)=>rows.reduce((n,r)=>n+Number(r[keyName]||0),0);
 export function northHospitalService(sql,out){
  sql.exec(`CREATE TABLE IF NOT EXISTS north_archive_current(id INTEGER PRIMARY KEY CHECK(id=1),filename TEXT NOT NULL,source_date TEXT NOT NULL,imported_at TEXT NOT NULL,data_json TEXT NOT NULL);CREATE TABLE IF NOT EXISTS north_archive_imports(file_hash TEXT PRIMARY KEY,filename TEXT NOT NULL,source_date TEXT NOT NULL,imported_at TEXT NOT NULL,birth_cases INTEGER NOT NULL,newborns INTEGER NOT NULL,operations INTEGER NOT NULL,inpatients INTEGER NOT NULL,outpatients INTEGER NOT NULL,emergency INTEGER NOT NULL);`);
+ let seed=null;try{seed=JSON.parse(gunzipSync(Buffer.from(readFileSync(new URL('./north-seed.json.gz.b64',import.meta.url),'utf8').trim(),'base64')).toString('utf8'))}catch{}
+ if(seed&&!sql.prepare('SELECT id FROM north_archive_current WHERE id=1').get()){
+  const stamp=new Date().toISOString(),digest=createHash('sha256').update(JSON.stringify(seed)).digest('hex'),totals={birthCases:add(seed.births,'deliveries'),newborns:add(seed.births,'newborns'),operations:add(seed.operations,'count'),inpatients:add(seed.inpatients,'count'),outpatients:add(seed.outpatients,'count'),emergency:add(seed.emergency,'count')};
+  sql.exec('BEGIN IMMEDIATE');try{sql.prepare('INSERT INTO north_archive_current(id,filename,source_date,imported_at,data_json) VALUES(1,?,?,?,?)').run(seed.filename,seed.sourceDate,stamp,JSON.stringify(seed));sql.prepare('INSERT OR IGNORE INTO north_archive_imports(file_hash,filename,source_date,imported_at,birth_cases,newborns,operations,inpatients,outpatients,emergency) VALUES(?,?,?,?,?,?,?,?,?,?)').run(digest,seed.filename,seed.sourceDate,stamp,totals.birthCases,totals.newborns,totals.operations,totals.inpatients,totals.outpatients,totals.emergency);sql.exec('COMMIT')}catch(e){sql.exec('ROLLBACK');throw e}
+ }
  const pending=new Map();
  const summary=()=>{const current=sql.prepare('SELECT filename,source_date AS sourceDate,imported_at AS importedAt,data_json FROM north_archive_current WHERE id=1').get();return {data:current?JSON.parse(current.data_json):null,imports:sql.prepare('SELECT filename,source_date AS sourceDate,imported_at AS importedAt,birth_cases AS birthCases,newborns,operations,inpatients,outpatients,emergency FROM north_archive_imports ORDER BY imported_at DESC LIMIT 20').all()}};
  return async(req,u)=>{const p=new URL(req.url).pathname;
