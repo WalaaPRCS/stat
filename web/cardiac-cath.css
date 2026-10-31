@@ -141,5 +141,61 @@ main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,ma
 @media(max-width:700px){.cath-hero{gap:12px;padding:18px}.cath-hero h1{font-size:23px}.cath-main-tabs{width:100%}.cath-main-tabs button{flex:1;min-width:0}.cath-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cath-metrics .metric{min-height:112px;padding:14px}.cath-metrics .metric b{font-size:25px}.cath-bar-row{grid-template-columns:minmax(0,1fr) 58px}.cath-bar-row .bar-track{grid-column:1/-1;grid-row:2}.ops-filter-panel{padding:14px}.ops-filter-panel .panel-head{align-items:flex-start;flex-direction:column}.ops-summary-title{align-items:flex-start;flex-direction:column;gap:2px}}
 @media(max-width:420px){.cath-hero{grid-template-columns:44px minmax(0,1fr);padding:15px}.cath-hero-icon{width:42px;height:42px;border-radius:13px}.cath-hero-icon svg{width:24px;height:24px}.cath-hero-badge{grid-column:1/-1;margin-inline-start:56px}.cath-metrics{grid-template-columns:1fr}.ops-filters{grid-template-columns:1fr}.ops-search{grid-column:auto}}
 
+/* Match the ambulance dashboard layout and component scale. */
+.cath-dashboard{gap:17px;max-width:1600px;margin-inline:auto}
+.cath-dashboard .cath-dashboard-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:105px;overflow:hidden;margin:0;padding:21px 25px;border:1px solid #e5e8ed;border-radius:18px;background:linear-gradient(115deg,#fff 0%,#fff 72%,#fff5f6 100%);box-shadow:0 8px 24px #1825340a;color:inherit}
+.cath-dashboard .cath-dashboard-head:before{position:absolute;inset:0 auto 0 0;width:7px;height:auto;border-radius:0;background:linear-gradient(180deg,#c82032,#e56b77);content:""}
+.cath-dashboard .ems-dashboard-copy h1{margin:0;color:#1c2836;font-size:26px;line-height:1.4}
+.cath-dashboard .ems-dashboard-copy p{margin:5px 0 0;color:#75808e;font-size:13px}
+.cath-dashboard .ems-dashboard-kicker{margin:0 0 4px;color:#b42336;font-size:12px}
+.cath-dashboard .ems-period-badge{position:relative;z-index:1;min-width:165px;padding:8px 13px;border:1px solid #f0dfe2;border-radius:11px;background:#fffafb;color:inherit}
+.cath-dashboard .ems-period-badge small{color:#8a929c;font-size:10px}
+.cath-dashboard .ems-period-badge b{color:#344150;font-size:12px}
+.cath-dashboard .cath-privacy{margin:0;padding:11px 14px;border:1px solid #edf0f3;border-inline-start:4px solid #c82032;border-radius:10px;background:#fff;color:#596575;font-size:11px;line-height:1.65}
+.cath-dashboard .cath-main-tabs{width:max-content;max-width:100%;margin:0;padding:4px;border:1px solid #e5e9ee;border-radius:10px;background:#f4f6f8}
+.cath-dashboard .cath-main-tabs button{min-width:145px;min-height:40px;border-radius:7px;color:#687582;font-size:12px}
+.cath-dashboard .cath-main-tabs button.active{background:#fff;color:#b42336;box-shadow:0 2px 7px #18253412}
+.cath-dashboard .cath-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0}
+.cath-dashboard .cath-metrics .metric{position:relative;min-width:0;min-height:115px;overflow:hidden;padding:16px 17px;border:1px solid #e5e9ee;border-inline-start:4px solid #c82032;border-radius:15px;background:#fff;box-shadow:0 5px 18px #18253408;transition:transform .18s ease,box-shadow .18s ease}
+.cath-dashboard .cath-metrics .metric:hover{transform:translateY(-2px);box-shadow:0 10px 24px #18253411}
+.cath-dashboard .cath-metrics .metric:after{position:absolute;inset:auto auto 0 0;width:68px;height:50px;border-radius:0 42px 0 0;background:#fff0f2;content:""}
+.cath-dashboard .cath-metrics .metric:nth-child(4n+2){border-inline-start-color:#15965e}.cath-dashboard .cath-metrics .metric:nth-child(4n+2):after{background:#eaf8f0}
+.cath-dashboard .cath-metrics .metric:nth-child(4n+3){border-inline-start-color:#d88727}.cath-dashboard .cath-metrics .metric:nth-child(4n+3):after{background:#fff5e5}
+.cath-dashboard .cath-metrics .metric:nth-child(4n){border-inline-start-color:#247db0}.cath-dashboard .cath-metrics .metric:nth-child(4n):after{background:#edf6fb}
+.cath-dashboard .cath-metrics .metric-label{position:relative;z-index:1;display:flex;align-items:center;gap:8px;color:#5c6570;font-size:13px;font-weight:650}
+.cath-dashboard .cath-metrics .metric-label .ico,.cath-dashboard .ops-metric-icon{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:11px;background:#fff0f2;color:#c82032}
+.cath-dashboard .cath-metrics .metric b{position:relative;z-index:1;display:block;margin:4px 0 0;color:#202a35;font-size:29px;line-height:1.25;font-variant-numeric:tabular-nums}
+.cath-dashboard .cath-metrics .metric small{position:relative;z-index:1;color:#8a949f;font-size:10px}
+.cath-dashboard .ops-summary-band{display:flex;flex-direction:column;gap:10px;margin:0}
+.cath-dashboard .ops-summary-title{margin:0 2px;color:#273544}
+.cath-dashboard .ops-summary-title span{font-size:16px;font-weight:750}
+.cath-dashboard .ops-summary-title small{color:#87919c;font-size:11px}
+.cath-dashboard .cath-filter-panel,.cath-dashboard .ops-filter-panel{margin:0;padding:15px 17px;border:1px solid #e5e9ee;border-radius:14px;background:#fff;box-shadow:0 4px 15px #18253406}
+.cath-dashboard .ops-filter-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:0;border:0}
+.cath-dashboard .ops-filter-panel .panel-head h2{margin:0;color:#263441;font-size:15px}
+.cath-dashboard .ops-filter-panel .panel-head small{display:block;margin-top:3px;color:#87919c;font-size:10px}
+.cath-dashboard .ops-filter-panel .ops-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+.cath-dashboard .ops-filter-panel .field label,.cath-dashboard .cath-filters .field label{color:#64717e;font-size:11px}
+.cath-dashboard .ops-filter-panel .control,.cath-dashboard .cath-filters .control{min-height:40px;border:1px solid #dfe5ea;border-radius:8px;background:#fbfcfd;font-size:12px}
+.cath-dashboard .ops-search{grid-column:span 2}
+.cath-dashboard .ops-charts{gap:15px;margin:0}
+.cath-dashboard .cath-panel,.cath-dashboard .ops-table-card,.cath-dashboard .cath-entry-panel,.cath-dashboard .cath-upload{overflow:hidden;border:1px solid #e5e9ee;border-radius:15px;background:#fff;box-shadow:0 5px 18px #18253407}
+.cath-dashboard .cath-panel .panel-head,.cath-dashboard .ops-table-card .panel-head{padding:15px 17px;border-bottom:1px solid #edf0f2}
+.cath-dashboard .cath-panel .panel-head h2,.cath-dashboard .ops-table-card .panel-head h2{margin:0;color:#263441;font-size:15px}
+.cath-dashboard .cath-panel .panel-head small,.cath-dashboard .ops-table-card .panel-head small{color:#87919c;font-size:11px}
+.cath-dashboard .cath-bar-row{min-height:42px;padding:9px 0;border-color:#f0f2f4}
+.cath-dashboard .cath-bar-row>b{border-radius:7px;background:#fff0f2;color:#b42336;font-size:12px}
+.cath-dashboard .cath-bar-row .bar-track{height:7px;background:#edf0f2}
+.cath-dashboard .cath-bar-row .bar-track i{background:linear-gradient(90deg,#e58b95,#c82032)}
+.cath-dashboard .ops-pivot-table thead tr:first-child th{background:#f7f8fa;color:#55616d}
+.cath-dashboard .ops-pivot-table tbody tr:hover{background:#fffafb}
+.cath-dashboard .cath-date-link{background:#fff0f2;color:#b42336}
+.cath-dashboard .cath-upload,.cath-dashboard .cath-entry-panel{padding:17px 19px}
+.cath-dashboard .cath-entry-bar h2,.cath-dashboard .cath-upload h2{color:#263441;font-size:15px}
+.cath-dashboard .btn.primary{background:#c82032;border-color:#c82032;box-shadow:0 4px 12px #c8203220}
+@media(max-width:900px){.cath-dashboard .cath-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cath-dashboard .ops-filter-panel .ops-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.cath-dashboard .cath-dashboard-head{align-items:flex-start;flex-direction:column;min-height:0;padding:19px}.cath-dashboard .ems-period-badge{width:100%}.cath-dashboard .ops-filter-panel .panel-head{align-items:flex-start;flex-direction:column}.cath-dashboard .ops-search{grid-column:auto}.cath-dashboard .cath-main-tabs{width:100%}.cath-dashboard .cath-main-tabs button{flex:1;min-width:0}}
+@media(max-width:600px){.cath-dashboard{gap:12px}.cath-dashboard .ems-dashboard-copy h1{font-size:22px}.cath-dashboard .cath-metrics{gap:8px}.cath-dashboard .cath-metrics .metric{min-height:100px;padding:12px 10px}.cath-dashboard .cath-metrics .metric-label{font-size:11px}.cath-dashboard .cath-metrics .metric b{font-size:23px}.cath-dashboard .ops-filter-panel .ops-filters{grid-template-columns:1fr}}
+
 /* Special Reports design refresh: primary care red header and compact forms */
 .special-report-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;color:#b32235;font-size:12px;font-weight:750}.special-report-kicker i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
