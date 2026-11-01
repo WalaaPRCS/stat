@@ -10,7 +10,7 @@ const northSum=(rows,key)=>rows.reduce((n,r)=>n+Number(r[key]||0),0);
 const northSafe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function northApi(path,body){const response=await fetch('/api/'+path,{cache:'no-store',...(body?{method:'POST',headers:{'Content-Type':'application/json','X-PRCS-Action':'1'},body:JSON.stringify(body)}:{})});const data=await response.json();if(!response.ok)throw Error(data.error||'تعذر تنفيذ الطلب');return data}
 async function northLoad(){if(North.busy)return;North.busy=true;try{const result=await northApi('north-summary');North.data=result.data;North.imports=result.imports||[];North.error=''}catch(e){North.error=e.message}finally{North.busy=false;if(location.hash==='#north')northPage()}}
-function northRows(tab=North.tab){return North.data?.[tab]||[]}
+function northRows(tab=North.tab){const key=tab==='outpatient'?'outpatients':tab;return North.data?.[key]||[]}
 function northCategoryKey(){return {births:'service',operations:'specialty',inpatient:'section',emergency:'department',outpatient:'clinic'}[North.tab]}
 function northFiltered(tab=North.tab){let rows=northRows(tab);if(North.from)rows=rows.filter(r=>r.date>=North.from);if(North.to)rows=rows.filter(r=>r.date<=North.to);const category=northCategoryKey();if(North.category&&category)rows=rows.filter(r=>r[category]===North.category);if(North.search){const q=North.search.toLocaleLowerCase('ar');rows=rows.filter(r=>Object.values(r).some(v=>String(v??'').toLocaleLowerCase('ar').includes(q)))}return rows}
 function northUnique(rows,key){return [...new Set(rows.map(r=>r[key]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'ar'))}
