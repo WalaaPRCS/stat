@@ -58,3 +58,6 @@ main:has(.cath-page-head)>*,main:has(.maw-page-head)>*,main:has(.amal-head)>*,ma
 
 /* Special Reports design refresh: primary care red header and compact forms */
 .special-report-kicker{display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;color:#b32235;font-size:12px;font-weight:750}.special-report-kicker i{width:8px;height:8px;border-radius:50%;background:#22a36a;box-shadow:0 0 0 4px #22a36a1a}
+.amal-consistency-note{display:grid;gap:5px;border-inline-start:4px solid #c58a2b;background:#fff9eb;color:#674f2c;padding:14px 18px;border-radius:12px}
+.amal-consistency-note span{display:block}
+.amal-consistency-note small{color:#806a48;line-height:1.7}
