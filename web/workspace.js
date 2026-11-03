@@ -9,7 +9,7 @@ const allowed=(section)=>!current||current.role==='admin'||(current.scope==='phc
 const visibleSections=workSections.filter(x=>allowed(x[3]));
 const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
 const facilityReports={quds:['quds-daily','cardiac-cath'],amal:['amal'],mawasi:['mawasi'],north:['north']};
-const reports=visibleSections.filter(([,input,view])=>reportRoutes.includes(view)&&(!current||current.role==='admin'||((current.permissions||[]).includes('view_section')||(current.permissions||[]).includes('view_dashboard')))&&(current.role==='admin'||current.scope!=='hospital'||(facilityReports[current.facility]||[]).includes(view)));
+const reports=visibleSections.filter(([,input,view])=>reportRoutes.includes(view)&&(!current||current.role==='admin'||((current.permissions||[]).includes('view_section')||(current.permissions||[]).includes('view_dashboard')))&&(!current||current.role==='admin'||current.scope!=='hospital'||(facilityReports[current.facility]||[]).includes(view)));
 const activeReport=reports.some(([,input,view])=>view===hash);
 if(activeReport)specialReportsOpen=true;
 const regular=visibleSections.filter(([,input,view])=>!reportRoutes.includes(view));
