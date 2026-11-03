@@ -78,6 +78,10 @@ const syncEMS=async()=>{
 };
 const attempts=new Map();
 async function handle(req,ip='local'){const url=new URL(req.url),p=url.pathname,u=identity(req),write=!['GET','HEAD'].includes(req.method);if(p==='/health')return out({ok:true});if(write&&(req.headers.get('Origin')!==origin||req.headers.get('X-PRCS-Action')!=='1'))return out({error:'طلب غير مصرح'},403);
+// Statistics and configuration APIs are private; authentication is the only public API.
+if(p.startsWith('/api/')&&!u&&!['/api/auth/me','/api/auth/setup','/api/auth/login'].includes(p))return out({error:'سجل الدخول لعرض الإحصائيات'},401);
+// Statistics and configuration APIs are private; authentication is the only public API.
+if(p.startsWith('/api/')&&!u&&!['/api/auth/me','/api/auth/setup','/api/auth/login'].includes(p))return out({error:'سجل الدخول لعرض الإحصائيات'},401);
 if(write&&['entry','custom'].includes(u?.role)){const scopedWrites={hospital:['/api/records','/api/hospital-activity-records','/api/cardiac-cath-entry','/api/mawasi-records'],phc:['/api/phc-records'],ems:['/api/ems-records'],disaster:['/api/disaster-reports','/api/disaster-service-records','/api/relief-operations','/api/water-operations','/api/awareness-activities','/api/kitchen-operations'],community:['/api/community-records','/api/community-import','/api/rehab-records','/api/rehab-import','/api/mental-health-records','/api/mental-health-import']};if(!scopedWrites[u.scope]?.includes(p))return out({error:'ليست لديك صلاحية إدخال في هذا القسم'},403);let body={};try{body=await req.clone().json()}catch{}const action=req.method==='DELETE'||body.delete===true||body.action==='delete'?'delete':body.overwrite||body.id?'edit':'create';const grant=sql.prepare('SELECT enabled FROM app_user_permissions WHERE user_id=? AND permission_key=?').get(u.id,action);if(grant&&grant.enabled!==1)return out({error:'صلاحية '+({create:'الإضافة',edit:'التعديل',delete:'الحذف'}[action])+' غير مفعلة لهذا المستخدم'},403)}
 if(p.startsWith('/api/cardiac-cath-')){if(p==='/api/cardiac-cath-entry'&&u?.role!=='admin'&&!hasPermission(u,'create'))return out({error:'لا تملك صلاحية إدخال إحصائيات القسطرة'},403);const response=await handleCardiacCath(req,u);if(response)return response}
 if(p.startsWith('/api/mawasi-')){const response=await handleMawasi(req,u);if(response)return response}
@@ -182,7 +186,16 @@ if(!write&&p==='/api/records-page'){
  return out({rows,total:summary.total,stats:{B:summary.B,J:summary.J,AI:summary.AI,AJ:summary.AJ},limit,offset});
 }
 
-const res=await worker.fetch(req,{DB});if(write||!p.startsWith('/api/')||!res.ok)return res;let data=await res.json();if(p==='/api/ems-report'){
+const res=await worker.fetch(req,{DB});if(write||!p.startsWith('/api/')||!res.ok)return res;let data=await res.json();
+// Scope read responses to the logged-in user's assigned section/facility.
+if(u&&['entry','custom'].includes(u.role)){if(p==='/api/records'&&u.scope==='hospital'&&Array.isArray(data))data=data.filter(r=>r.hospital_id===u.facility);if(p==='/api/phc-report'&&u.scope==='phc'&&data?.records)data.records=data.records.filter(r=>r.clinic_id===u.facility);if(p==='/api/ems-report'&&u.scope==='ems'&&data?.records)data.records=data.records.filter(r=>r.region===u.facility)}
+// Scope read responses to the logged-in user's assigned section/facility.
+if(u&&['entry','custom'].includes(u.role)){
+ if(p==='/api/records'&&u.scope==='hospital'&&Array.isArray(data))data=data.filter(r=>r.hospital_id===u.facility);
+ if(p==='/api/phc-report'&&u.scope==='phc'&&data?.records)data.records=data.records.filter(r=>r.clinic_id===u.facility);
+ if(p==='/api/ems-report'&&u.scope==='ems'&&data?.records)data.records=data.records.filter(r=>r.region===u.facility);
+}
+if(p==='/api/ems-report'){
  const live=sql.prepare('SELECT * FROM ems_integrated_records ORDER BY date DESC,region').all().map(r=>({...r,values:JSON.parse(r.values_json),values_json:undefined,source_id:'ems-live',source_sheet:'مزامنة تلقائية من نظام الإسعاف',external_sync:true}));
  const existing=new Set(data.records.map(r=>r.region+'|'+r.date+'|'+r.kind)),visibleLive=live.filter(r=>!existing.has(r.region+'|'+r.date+'|'+r.kind));
  data.integration={...integrationStatus(),hiddenDuplicates:live.length-visibleLive.length};
