@@ -5,7 +5,7 @@ const communityModels={rehab:'التأهيل المجتمعي',mental:'الصح�
 let specialReportsOpen=false;
 function workNav(hash){
 const current=Account?.user;
-const allowed=(section)=>!current||current.role==='admin'||current.scope===section;
+const allowed=(section)=>!current||current.role==='admin'||(current.scope==='phc'||current.scope==='ems'?section==='health':current.scope===section);
 const visibleSections=workSections.filter(x=>allowed(x[3]));
 const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
 const facilityReports={quds:['quds-daily','cardiac-cath'],amal:['amal'],mawasi:['mawasi'],north:['north']};
