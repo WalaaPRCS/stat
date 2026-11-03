@@ -816,3 +816,21 @@ button.hospital-indicator-card{font:inherit;cursor:pointer}
 .cath-metrics .metric:hover,.maw-stats .metric:hover,.amal-metrics .metric:hover,.qd-highlight:hover{transform:translateY(-2px);box-shadow:0 9px 22px #17233212}
 .cath-wide-table,.ops-pivot-table,.maw-table,.amal-table,.qd-panel .table-wrap{border:1px solid #e4e9ee;border-radius:12px;box-shadow:0 3px 11px #17233205}
 @media(max-width:700px){.cath-page-head,.maw-page-head,.amal-head,.qd-head{align-items:flex-start;flex-direction:column;padding:18px}.cath-page-head h1,.maw-page-head h1,.amal-head h1,.qd-head h1{font-size:23px}.cath-page-head~.tabs button,.maw-tabs button,.amal-tabs button{flex:1 1 auto}}
+
+/* Dedicated authentication screen */
+body.auth-screen{background:linear-gradient(135deg,#f8fafc 0%,#fff 55%,#fff1f2 100%)}
+body.auth-screen #sidebar.auth-hidden,body.auth-screen .topbar.auth-hidden{display:none!important}
+body.auth-screen .shell{margin:0;min-height:100vh;width:100%}
+body.auth-screen #main{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:40px 24px;box-sizing:border-box}
+body.auth-screen footer{display:none}
+body.auth-screen #main>.page-head{display:none}
+body.auth-screen #main>.form-panel{width:min(520px,100%);margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+body.auth-screen #main>.form-panel:before{content:'';display:block;width:92px;height:92px;margin:0 auto 18px;background:url('/prcs-logo.png') center/contain no-repeat}
+body.auth-screen #main>.form-panel:after{content:'نظام إحصائيات الهلال الأحمر الفلسطيني';display:block;text-align:center;color:#182b49;font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:6px}
+body.auth-screen #main>.form-panel .form-section{background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:28px;box-shadow:0 18px 45px rgba(24,43,73,.10)}
+body.auth-screen #main>.form-panel .form-grid{grid-template-columns:1fr;gap:16px}
+body.auth-screen #main>.form-panel .form-grid:before{content:'تسجيل الدخول إلى لوحة مؤشرات قطاع غزة';display:block;text-align:center;color:#64748b;font-size:.95rem;margin-bottom:4px}
+body.auth-screen #main>.form-panel .form-actions{background:transparent;border:0;padding:20px 0 0;display:flex;justify-content:center}
+body.auth-screen #main>.form-panel .form-actions .btn{min-width:150px}
+body.auth-screen #main>.form-panel .subtitle{display:block;text-align:center;margin-top:18px}
+@media(max-width:600px){body.auth-screen #main{padding:24px 16px}body.auth-screen #main>.form-panel .form-section{padding:20px}}
