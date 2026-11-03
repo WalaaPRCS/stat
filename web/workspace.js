@@ -4,11 +4,14 @@ const workSections=[['المستشفيات','entry','hospital-records','hospital
 const communityModels={rehab:'التأهيل المجتمعي',mental:'الصحة النفسية',social:'العمل المجتمعي',youth:'الشباب والمتطوعون',disaster:'مواجهة الكوارث'};
 let specialReportsOpen=false;
 function workNav(hash){
+const current=Account?.user;
+const allowed=(section)=>!current||current.role==='admin'||current.scope===section;
+const visibleSections=workSections.filter(x=>allowed(x[3]));
 const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
-const reports=workSections.filter(([,input,view])=>reportRoutes.includes(view));
+const reports=visibleSections.filter(([,input,view])=>reportRoutes.includes(view));
 const activeReport=reports.some(([,input,view])=>view===hash);
 if(activeReport)specialReportsOpen=true;
-const regular=workSections.filter(([,input,view])=>!reportRoutes.includes(view));
+const regular=visibleSections.filter(([,input,view])=>!reportRoutes.includes(view));
 const link=(id,label)=>`<a href="#${id}" class="${hash===id?'active':''}" ${hash===id?'aria-current="page"':''}>${label}</a>`;
 const group='<div class="nav-group"><button type="button" id="special-reports-toggle" class="nav-group-toggle '+(activeReport?'active':'')+'" aria-expanded="'+specialReportsOpen+'">'+icon('hospital')+'<span>تقارير خاصة</span><span class="nav-group-chevron">'+(specialReportsOpen?'⌃':'⌄')+'</span></button><div class="nav-submenu" '+(specialReportsOpen?'':'hidden')+'>'+reports.map(([name,input,view,ic])=>link(view,icon(ic)+name)).join('')+'</div></div>';
 return link('home','الرئيسية')+regular.map(([name,input,view,ic])=>link(view,icon(ic)+name)).join('')+group+link('phc-clinics','دليل العيادات')+link('services','الخدمات والمواعيد')+(workspaceMode==='staff'?link('import-review','مراجعة الاستيراد'):'')
