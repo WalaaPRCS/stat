@@ -4,7 +4,7 @@ const workSections=[['المستشفيات','entry','hospital-records','hospital
 const communityModels={rehab:'التأهيل المجتمعي',mental:'الصحة النفسية',social:'العمل المجتمعي',youth:'الشباب والمتطوعون',disaster:'مواجهة الكوارث'};
 let specialReportsOpen=false;
 function workNav(hash){
-const current=Account?.user;
+const current=typeof Account!=='undefined'?Account.user:null;
 const allowed=(section)=>!current||current.role==='admin'||(current.scope==='phc'||current.scope==='ems'?section==='health':current.scope===section);
 const visibleSections=workSections.filter(x=>allowed(x[3]));
 const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
