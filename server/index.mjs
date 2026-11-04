@@ -188,11 +188,10 @@ if(!write&&p==='/api/records-page'){
 
 const res=await worker.fetch(req,{DB});if(write||!p.startsWith('/api/')||!res.ok)return res;let data=await res.json();
 // Scope read responses to the logged-in user's assigned section/facility.
-if(u&&['entry','custom'].includes(u.role)){if(p==='/api/records'&&u.scope==='hospital'&&Array.isArray(data))data=data.filter(r=>r.hospital_id===u.facility);if(p==='/api/phc-report'&&u.scope==='phc'&&data?.records)data.records=data.records.filter(r=>r.clinic_id===u.facility);if(p==='/api/ems-report'&&u.scope==='ems'&&data?.records)data.records=data.records.filter(r=>r.region===u.facility)}
-// Scope read responses to the logged-in user's assigned section/facility.
 if(u&&['entry','custom'].includes(u.role)){
  if(p==='/api/records'&&u.scope==='hospital'&&Array.isArray(data))data=data.filter(r=>r.hospital_id===u.facility);
- if(p==='/api/phc-report'&&u.scope==='phc'&&data?.records)data.records=data.records.filter(r=>r.clinic_id===u.facility);
+ if(p==='/api/phc-report'&&u.scope==='phc'&&data){if(Array.isArray(data.records))data.records=data.records.filter(r=>r.clinic_id===u.facility);if(Array.isArray(data.clinics))data.clinics=data.clinics.filter(c=>c.id===u.facility)}
+ if(p==='/api/phc-clinics'&&u.scope==='phc'&&data&&Array.isArray(data.clinics))data.clinics=data.clinics.filter(c=>c.id===u.facility);
  if(p==='/api/ems-report'&&u.scope==='ems'&&data?.records)data.records=data.records.filter(r=>r.region===u.facility);
 }
 if(p==='/api/ems-report'){
