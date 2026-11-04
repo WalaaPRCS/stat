@@ -5,7 +5,7 @@ const validName=value=>typeof value==='string'&&value.trim().length>0&&value.tri
 const regions=['شمال غزة','غزة','الوسطى','خانيونس','رفح'];
 const inputModeForBranch=name=>{const value=norm(name);return (value.includes('اطفال')&&(value.includes('عياد')||value.includes('جراح')))?'gender':'age_gender'};
 
-export function hospitalSettingsService(sql,out){
+export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
   sql.exec(`
     CREATE TABLE IF NOT EXISTS hospital_service_types(
       id TEXT PRIMARY KEY,name TEXT NOT NULL,norm TEXT NOT NULL UNIQUE
@@ -76,7 +76,7 @@ export function hospitalSettingsService(sql,out){
     return {id:hospitalId};
   };
   async function handle(req,user){
-    if((req.method!=='GET'&&user?.role!=='admin')||(req.method==='GET'&&user?.role!=='admin'&&!(user?.role==='entry'&&user.scope==='hospital')))return out({error:'إعدادات المستشفيات متاحة لمدير النظام ومدخلي بيانات المستشفيات فقط'},403);
+    const scopedHospital=user?.role!=='admin'&&user?.scope==='hospital';if((req.method!=='GET'&&user?.role!=='admin'&&!canManageSettings(user))||(req.method==='GET'&&user?.role!=='admin'&&!(user?.role==='entry'&&user.scope==='hospital')))return out({error:req.method==='GET'?'إعدادات المستشفيات متاحة للمرفق المخصص فقط':'تحتاج هذه العملية إلى صلاحية تعديل إعدادات الأقسام'},403);
     if(req.method==='GET'){
       const scoped=user?.role!=='admin'&&user?.scope==='hospital',hospitalId=scoped?user.facility:null;
       const hospitals=sql.prepare('SELECT id,name,region,location,status,start FROM hospitals ORDER BY name').all().filter(h=>!hospitalId||h.id===hospitalId);
@@ -89,7 +89,7 @@ export function hospitalSettingsService(sql,out){
     }
     if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
     let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
-    try{return out(transact(()=>{
+    try{if(scopedHospital&&b.hospitalId&&b.hospitalId!==user.facility)return out({error:'لا يمكنك تعديل إعدادات مستشفى آخر'},403);if(scopedHospital&&b.action==='hospital.save'&&b.id&&b.id!==user.facility)return out({error:'لا يمكنك تعديل مستشفى آخر'},403);return out(transact(()=>{
       if(b.action==='hospital.save')return ensureHospital(b.name,b.region,b.address||'',b.status||'فعال',b.start||'',b.id||null);
       if(b.action==='structure.import'){
         const hospitalId=b.hospitalId,groups=b.serviceTypes;
