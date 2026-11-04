@@ -9,7 +9,7 @@ const allowed=(section)=>!current||current.role==='admin'||(current.scope==='phc
 const visibleSections=workSections.filter(x=>allowed(x[3]));
 const reportRoutes=['quds-daily','cardiac-cath','mawasi','amal','north'];
 const facilityReports={quds:['quds-daily','cardiac-cath'],amal:['amal'],mawasi:['mawasi'],north:['north']};
-const reports=current?.role==='admin'?visibleSections.filter(([,input,view])=>reportRoutes.includes(view)):[];
+const reports=current?.role==='admin'?visibleSections.filter(([,input,view])=>reportRoutes.includes(view)):visibleSections.filter(([,input,view])=>reportRoutes.includes(view)&&current?.scope==='hospital'&&((current.facility==='quds'&&['quds-daily','cardiac-cath'].includes(view))||(current.facility==='mawasi'&&view==='mawasi')||(current.facility==='amal'&&view==='amal')||(current.facility==='north'&&view==='north')));
 const activeReport=reports.some(([,input,view])=>view===hash);
 if(activeReport)specialReportsOpen=true;
 const regular=visibleSections.filter(([,input,view])=>!reportRoutes.includes(view));
