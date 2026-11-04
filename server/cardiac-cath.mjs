@@ -110,10 +110,12 @@ async function extract(zip) {
 export function cardiacCathService(sql,out){
   sql.exec(`CREATE TABLE IF NOT EXISTS cardiac_cath_daily(date TEXT NOT NULL,procedure_type TEXT NOT NULL,status TEXT NOT NULL,age_band TEXT NOT NULL,sex_code TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,procedure_type,status,age_band,sex_code));CREATE TABLE IF NOT EXISTS cardiac_cath_daily_indications(date TEXT NOT NULL,indication TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,indication));CREATE TABLE IF NOT EXISTS cardiac_cath_daily_techniques(date TEXT NOT NULL,technique TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,technique));CREATE TABLE IF NOT EXISTS cardiac_cath_imports(id TEXT PRIMARY KEY,filename TEXT NOT NULL,source_date TEXT NOT NULL,file_hash TEXT NOT NULL UNIQUE,imported_at TEXT NOT NULL,total INTEGER NOT NULL,joined INTEGER NOT NULL,unjoined INTEGER NOT NULL);CREATE TABLE IF NOT EXISTS cardiac_operations(date TEXT NOT NULL,department TEXT NOT NULL,specialty TEXT NOT NULL,category TEXT NOT NULL,operation TEXT NOT NULL,anesthesia TEXT NOT NULL,insurance TEXT NOT NULL,sex TEXT NOT NULL,age TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(date,department,specialty,category,operation,anesthesia,insurance,sex,age));CREATE TABLE IF NOT EXISTS cardiac_cath_manual_entries(id TEXT PRIMARY KEY,date TEXT NOT NULL,procedure_type TEXT NOT NULL,status TEXT NOT NULL,age_band TEXT NOT NULL,sex_code TEXT NOT NULL,count INTEGER NOT NULL,indication TEXT NOT NULL DEFAULT '',techniques TEXT NOT NULL DEFAULT '[]',created_at TEXT NOT NULL,created_by TEXT NOT NULL);`);
   const pending=new Map();
+  const canQuds=u=>u?.role==='admin'||(u?.scope==='hospital'&&['entry','custom'].includes(u.role)&&(u.facility==='quds'||!!sql.prepare("SELECT 1 FROM hospitals WHERE id=? AND name LIKE '%القدس%'").get(u.facility)));
   return async function handleCardiacCath(req,u){
     const p=new URL(req.url).pathname;
-    if(p==='/api/cardiac-cath-operations-summary'&&req.method==='GET'){const rows=sql.prepare('SELECT date,department,specialty,category,operation,anesthesia,insurance,sex,age,count FROM cardiac_operations ORDER BY date DESC,count DESC').all();return out({total:rows.reduce((n,r)=>n+Number(r.count),0),rows});}
+    if(p==='/api/cardiac-cath-operations-summary'&&req.method==='GET'){if(!canQuds(u))return out({error:'إحصائيات القسطرة متاحة للمرفق المخصص فقط'},403);const rows=sql.prepare('SELECT date,department,specialty,category,operation,anesthesia,insurance,sex,age,count FROM cardiac_operations ORDER BY date DESC,count DESC').all();return out({total:rows.reduce((n,r)=>n+Number(r.count),0),rows});}
     if(p==='/api/cardiac-cath-summary'&&req.method==='GET'){
+      if(!canQuds(u))return out({error:'إحصائيات القسطرة متاحة للمرفق المخصص فقط'},403);
       const daily=sql.prepare('SELECT date,procedure_type,status,age_band,sex_code,count FROM cardiac_cath_daily ORDER BY date DESC,procedure_type').all();
       const manual=sql.prepare('SELECT date,procedure_type,status,age_band,sex_code,count,indication,techniques FROM cardiac_cath_manual_entries').all();
       for(const r of manual){const row=daily.find(x=>x.date===r.date&&x.procedure_type===r.procedure_type&&x.status===r.status&&x.age_band===r.age_band&&x.sex_code===r.sex_code);if(row)row.count+=r.count;else daily.push({...r});}
@@ -126,7 +128,7 @@ export function cardiacCathService(sql,out){
       return out({total,daily,indications,techniques,byType:by('procedure_type'),byStatus:by('status'),byAge:by('age_band'),bySex:by('sex_code'),imports});
     }
     if(p==='/api/cardiac-cath-entry'&&req.method==='POST'){
-      if(!u||!['admin','entry','custom'].includes(u.role)||(u.role!=='admin'&&u.scope!=='hospital'))return out({error:'لا تملك صلاحية إدخال إحصائيات القسطرة'},403);
+      if(!canQuds(u))return out({error:'لا تملك صلاحية إدخال إحصائيات القسطرة'},403);
       try{
         const body=await req.json(),date=safeDate(body.date),raw=Array.isArray(body.entries)?body.entries:[body];
         if(!date||raw.length<1||raw.length>50)return out({error:'أدخل تاريخًا صحيحًا وسجلًا واحدًا على الأقل (حد أقصى 50 سجلًا)'},400);
