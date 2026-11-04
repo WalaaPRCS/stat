@@ -78,13 +78,14 @@ export function hospitalSettingsService(sql,out){
   async function handle(req,user){
     if((req.method!=='GET'&&user?.role!=='admin')||(req.method==='GET'&&user?.role!=='admin'&&!(user?.role==='entry'&&user.scope==='hospital')))return out({error:'إعدادات المستشفيات متاحة لمدير النظام ومدخلي بيانات المستشفيات فقط'},403);
     if(req.method==='GET'){
-      return out({
-        hospitals:sql.prepare('SELECT id,name,region,location,status,start FROM hospitals ORDER BY name').all(),
-        serviceTypes:sql.prepare(`SELECT t.*,group_concat(l.hospital_id) AS hospital_ids FROM hospital_service_types t LEFT JOIN hospital_service_type_links l ON l.service_type_id=t.id GROUP BY t.id ORDER BY t.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})),
-        departments:sql.prepare(`SELECT d.*,group_concat(l.hospital_id) AS hospital_ids FROM hospital_department_catalog d LEFT JOIN hospital_department_links l ON l.department_id=d.id GROUP BY d.id ORDER BY d.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})),
-        departmentLinks:sql.prepare(`SELECT * FROM hospital_department_links ORDER BY sort_order,department_id`).all(),
-        branches:sql.prepare(`SELECT b.* FROM hospital_branch_catalog b ORDER BY b.department_id,b.name`).all()
-      });
+      const scoped=user?.role!=='admin'&&user?.scope==='hospital',hospitalId=scoped?user.facility:null;
+      const hospitals=sql.prepare('SELECT id,name,region,location,status,start FROM hospitals ORDER BY name').all().filter(h=>!hospitalId||h.id===hospitalId);
+      const serviceTypes=sql.prepare(`SELECT t.*,group_concat(l.hospital_id) AS hospital_ids FROM hospital_service_types t LEFT JOIN hospital_service_type_links l ON l.service_type_id=t.id GROUP BY t.id ORDER BY t.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})).filter(x=>!hospitalId||x.hospitalIds.includes(hospitalId)).map(x=>({...x,hospitalIds:hospitalId?[hospitalId]:x.hospitalIds}));
+      const departmentLinks=sql.prepare(`SELECT * FROM hospital_department_links ORDER BY sort_order,department_id`).all().filter(x=>!hospitalId||x.hospital_id===hospitalId);
+      const linkedDepartments=new Set(departmentLinks.map(x=>x.department_id));
+      const departments=sql.prepare(`SELECT d.*,group_concat(l.hospital_id) AS hospital_ids FROM hospital_department_catalog d LEFT JOIN hospital_department_links l ON l.department_id=d.id GROUP BY d.id ORDER BY d.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})).filter(x=>!hospitalId||linkedDepartments.has(x.id)).map(x=>({...x,hospitalIds:hospitalId?[hospitalId]:x.hospitalIds}));
+      const branches=sql.prepare(`SELECT b.* FROM hospital_branch_catalog b ORDER BY b.department_id,b.name`).all().filter(x=>!hospitalId||linkedDepartments.has(x.department_id));
+      return out({hospitals,serviceTypes,departments,departmentLinks,branches});
     }
     if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
     let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
