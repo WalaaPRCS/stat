@@ -27,7 +27,7 @@ export function mentalHealthService(sql,out,hasPermission){
    const rows=sql.prepare("SELECT * FROM mental_health_records ORDER BY CASE WHEN date='' THEN 1 ELSE 0 END,date DESC,program").all();
    return out(rows.filter(r=>(!from||!r.date||r.date>=from)&&(!to||!r.date||r.date<=to)&&(!program||r.program===program)).map(decode));
   }
-  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='community';
+  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='mental';
   if(!allowed)return out({error:'ليس لديك صلاحية إدخال إحصائيات الصحة النفسية'},403);
   let b;try{b=await req.json()}catch{return out({error:'بيانات النموذج غير صالحة'},400)}
   if(url.pathname==='/api/mental-health-import'){
