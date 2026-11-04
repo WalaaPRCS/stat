@@ -72,7 +72,7 @@ try{if(old)sql.prepare('UPDATE disaster_constants SET name=?,norm=?,payload=? WH
 const currentCatalog=catalog();
 if(req.method==='GET')return out({catalog:currentCatalog,constants:settings(),regions:reliefRegions,records:sql.prepare('SELECT id,date,payload FROM relief_operations ORDER BY date DESC,updated_at DESC').all().map(r=>({id:r.id,kind:'daily',...hydrate(JSON.parse(r.payload))})).concat(sql.prepare('SELECT * FROM relief_summaries').all().map(r=>({id:r.id,...JSON.parse(r.payload)}))).sort((a,b)=>b.date.localeCompare(a.date))});
 if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
-if(!(u?.role==='admin'||u?.role==='entry'&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال المساعدات الإغاثية'},403);
+if(!(u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال المساعدات الإغاثية'},403);
 let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
 if(b.id&&!sql.prepare('SELECT id FROM relief_operations WHERE id=?').get(b.id))return out({error:'العملية غير موجودة'},404);
 if(b.action==='delete'){if(!b.id)return out({error:'اختر العملية'},400);sql.prepare('DELETE FROM relief_operations WHERE id=?').run(b.id);return out({saved:true})}
