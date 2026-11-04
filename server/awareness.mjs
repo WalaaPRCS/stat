@@ -21,7 +21,7 @@ sql.prepare('INSERT INTO awareness_summaries VALUES(?,?)').run(id,JSON.stringify
 }
 
 if(req.method==='GET')return out({constants:data,records:sql.prepare('SELECT id,payload FROM awareness_activities ORDER BY date DESC,updated_at DESC').all().map(r=>{const p=JSON.parse(r.payload);return {id:r.id,kind:'daily',...p,site:data.site.find(x=>x.id===p.siteId)?.name||'—',project:data.project.find(x=>x.id===p.projectId)?.name||'',partner:data.partner.find(x=>x.id===p.partnerId)?.name||''}}).concat(sql.prepare('SELECT * FROM awareness_summaries').all().map(r=>({id:r.id,...JSON.parse(r.payload)}))).sort((a,b)=>b.date.localeCompare(a.date))});
-if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);if(!(u?.role==='admin'||u?.role==='entry'&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال التوعية'},403);
+if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);if(!(u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='disaster'))return out({error:'ليست لديك صلاحية إدخال التوعية'},403);
 let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
 if(b.id&&!sql.prepare('SELECT id FROM awareness_activities WHERE id=?').get(b.id))return out({error:'النشاط غير موجود'},404);
 if(b.action==='delete'){if(!b.id)return out({error:'اختر النشاط'},400);sql.prepare('DELETE FROM awareness_activities WHERE id=?').run(b.id);return out({saved:true})}
