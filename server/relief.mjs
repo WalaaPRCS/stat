@@ -53,8 +53,8 @@ sql.exec('COMMIT');return out({addedConstants,skippedConstants,added,skipped});
 }catch(e){sql.exec('ROLLBACK');return out({error:e.message||'تعذر الاستيراد؛ لم يتم حفظ أي تغييرات'},400)}
 }
 if(new URL(req.url).pathname==='/api/disaster-settings'){
-if(u?.role!=='admin')return out({error:'إعدادات القسم لمدير النظام فقط'},403);
-if(req.method==='GET')return out(settings());
+if(req.method==='GET'){if(!(u?.role==='admin'||u?.scope==='disaster'))return out({error:'ليست لديك صلاحية عرض إعدادات القسم'},403);return out(settings());}
+if(u?.role!=='admin')return out({error:'تعديل إعدادات القسم لمدير النظام فقط'},403);
 if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
 let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
 const types=['waterStation','waterSource','kitchen','project','partner','unit','category','siteType','site','item'];if(!types.includes(b.type))return out({error:'نوع ثابت غير صالح'},400);
