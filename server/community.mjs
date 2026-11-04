@@ -16,7 +16,7 @@ export function communityService(sql,out,hasPermission){
    const rows=sql.prepare('SELECT * FROM community_records ORDER BY period DESC,region,category,service').all();
    return out(rows.filter(r=>(!from||r.period>=from)&&(!to||r.period<=to)&&(!region||r.region===region)&&(!category||r.category===category)).map(decode));
   }
-  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='community';
+  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&['community','social','youth'].includes(u.scope);
   if(!allowed)return out({error:'ليس لديك صلاحية إدخال إحصائيات دائرة العمل المجتمعي'},403);
   let b;try{b=await req.json()}catch{return out({error:'بيانات النموذج غير صالحة'},400)}
   if(url.pathname==='/api/community-import'){
