@@ -14,7 +14,7 @@ export function rehabService(sql,out,hasPermission){
    const rows=sql.prepare('SELECT * FROM rehab_records ORDER BY date DESC,region,category,service').all();
    return out(rows.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to)&&(!region||r.region===region)&&(!category||r.category===category)).map(decode));
   }
-  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='community';
+  const allowed=u?.role==='admin'||['entry','custom'].includes(u?.role)&&u.scope==='rehab';
   if(!allowed)return out({error:'ليس لديك صلاحية إدخال إحصائيات دائرة التأهيل المجتمعي'},403);
   let b;try{b=await req.json()}catch{return out({error:'بيانات النموذج غير صالحة'},400)}
   if(url.pathname==='/api/rehab-import'){
