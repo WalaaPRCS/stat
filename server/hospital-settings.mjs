@@ -30,6 +30,13 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
       id TEXT PRIMARY KEY,department_id TEXT NOT NULL REFERENCES hospital_department_catalog(id) ON DELETE CASCADE,
       name TEXT NOT NULL,norm TEXT NOT NULL,UNIQUE(department_id,norm)
     );
+    CREATE TABLE IF NOT EXISTS hospital_branch_links(
+      hospital_id TEXT NOT NULL REFERENCES hospitals(id) ON DELETE CASCADE,
+      service_type_id TEXT NOT NULL REFERENCES hospital_service_types(id) ON DELETE CASCADE,
+      department_id TEXT NOT NULL REFERENCES hospital_department_catalog(id) ON DELETE CASCADE,
+      branch_id TEXT NOT NULL REFERENCES hospital_branch_catalog(id) ON DELETE CASCADE,
+      PRIMARY KEY(hospital_id,service_type_id,department_id,branch_id)
+    );
   `);
   sql.exec('PRAGMA foreign_keys=ON');
   if(!sql.prepare('PRAGMA table_info(hospital_department_links)').all().some(c=>c.name==='age_gender_breakdown')){sql.exec('ALTER TABLE hospital_department_links ADD COLUMN age_gender_breakdown INTEGER NOT NULL DEFAULT 0');sql.exec("UPDATE hospital_department_links SET age_gender_breakdown=1 WHERE department_id IN (SELECT id FROM hospital_department_catalog WHERE name LIKE '%العيادات الخارجية%')");}
@@ -45,6 +52,11 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
     if(!row){row={id:'service-type-'+randomUUID()};sql.prepare('INSERT INTO hospital_service_types(id,name,norm) VALUES(?,?,?)').run(row.id,name,norm(name))}
     sql.prepare('INSERT OR IGNORE INTO hospital_service_type_links(hospital_id,service_type_id) SELECT id,? FROM hospitals').run(row.id);
   }
+  // Preserve existing branch visibility once, then keep new branch links facility-scoped.
+  sql.prepare('INSERT OR IGNORE INTO hospital_branch_links(hospital_id,service_type_id,department_id,branch_id) SELECT dl.hospital_id,dl.service_type_id,dl.department_id,b.id FROM hospital_department_links dl JOIN hospital_branch_catalog b ON b.department_id=dl.department_id').run();
+  // Cardiac catheterization is a Quds-only service in the current data model.
+  const quds=sql.prepare("SELECT id FROM hospitals WHERE name LIKE '%القدس%' OR id='quds' LIMIT 1").get();
+  if(quds){for(const b of sql.prepare("SELECT id FROM hospital_branch_catalog WHERE name LIKE '%قسطرة%'").all()){sql.prepare('DELETE FROM hospital_branch_links WHERE branch_id=? AND hospital_id<>?').run(b.id,quds.id);}}
 
   const getHospital=id=>sql.prepare('SELECT * FROM hospitals WHERE id=?').get(id);
   const getService=id=>sql.prepare('SELECT * FROM hospital_service_types WHERE id=?').get(id);
@@ -84,12 +96,19 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
       const departmentLinks=sql.prepare(`SELECT * FROM hospital_department_links ORDER BY sort_order,department_id`).all().filter(x=>!hospitalId||x.hospital_id===hospitalId);
       const linkedDepartments=new Set(departmentLinks.map(x=>x.department_id));
       const departments=sql.prepare(`SELECT d.*,group_concat(l.hospital_id) AS hospital_ids FROM hospital_department_catalog d LEFT JOIN hospital_department_links l ON l.department_id=d.id GROUP BY d.id ORDER BY d.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})).filter(x=>!hospitalId||linkedDepartments.has(x.id)).map(x=>({...x,hospitalIds:hospitalId?[hospitalId]:x.hospitalIds}));
-      const branches=sql.prepare(`SELECT b.* FROM hospital_branch_catalog b ORDER BY b.department_id,b.name`).all().filter(x=>!hospitalId||linkedDepartments.has(x.department_id));
+      const branches=sql.prepare(`SELECT b.*,group_concat(DISTINCT bl.hospital_id) AS hospital_ids FROM hospital_branch_catalog b LEFT JOIN hospital_branch_links bl ON bl.branch_id=b.id GROUP BY b.id ORDER BY b.department_id,b.name`).all().map(x=>({...x,hospitalIds:x.hospital_ids?x.hospital_ids.split(','):[]})).filter(x=>!hospitalId||x.hospitalIds.includes(hospitalId));
       return out({hospitals,serviceTypes,departments,departmentLinks,branches});
     }
     if(req.method!=='POST')return out({error:'طلب غير مدعوم'},405);
     let b;try{b=await req.json()}catch{return out({error:'بيانات غير صالحة'},400)}
-    try{if(scopedHospital&&b.hospitalId&&b.hospitalId!==user.facility)return out({error:'لا يمكنك تعديل إعدادات مستشفى آخر'},403);if(scopedHospital&&b.action==='hospital.save'&&b.id&&b.id!==user.facility)return out({error:'لا يمكنك تعديل مستشفى آخر'},403);return out(transact(()=>{
+    try{
+      if(scopedHospital){
+        const facility=b.hospitalId||b.hospital_id;
+        if(facility&&facility!==user.facility)return out({error:'لا يمكنك تعديل إعدادات مرفق آخر'},403);
+        if(['service.save','service.delete','department.delete','branch.delete'].includes(b.action)&&b.action!=='branch.delete')return out({error:'هذه العملية على القاموس العام متاحة لمدير النظام فقط'},403);
+        if(b.action==='branch.delete'&&!b.hospitalId)b.hospitalId=user.facility;
+      }
+      if(scopedHospital&&b.hospitalId&&b.hospitalId!==user.facility)return out({error:'لا يمكنك تعديل إعدادات مستشفى آخر'},403);if(scopedHospital&&b.action==='hospital.save'&&b.id&&b.id!==user.facility)return out({error:'لا يمكنك تعديل مستشفى آخر'},403);return out(transact(()=>{
       if(b.action==='hospital.save')return ensureHospital(b.name,b.region,b.address||'',b.status||'فعال',b.start||'',b.id||null);
       if(b.action==='structure.import'){
         const hospitalId=b.hospitalId,groups=b.serviceTypes;
@@ -113,7 +132,7 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
               if(!validName(branchName))throw bad('اسم فرع غير صالح في الملف');
               const branchNorm=norm(branchName),exists=sql.prepare('SELECT 1 FROM hospital_branch_catalog WHERE department_id=? AND norm=?').get(dep.id,branchNorm);
               if(exists){skippedBranches++;continue}
-              sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run('branch-'+randomUUID(),dep.id,branchName.trim(),branchNorm,inputModeForBranch(branchName));addedBranches++;
+              const branchId='branch-'+randomUUID();sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run(branchId,dep.id,branchName.trim(),branchNorm,inputModeForBranch(branchName));sql.prepare('INSERT OR IGNORE INTO hospital_branch_links(hospital_id,service_type_id,department_id,branch_id) VALUES(?,?,?,?)').run(hospitalId,type.id,dep.id,branchId);addedBranches++;
             }
           }
         }
@@ -126,7 +145,7 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
         sql.prepare('DELETE FROM hospitals WHERE id=?').run(h.id);return {saved:true};
       }
       if(b.action==='service.save'){
-        const row=catalogSave('hospital_service_types',b.id||null,b.name);const desired=[...new Set(Array.isArray(b.hospitalIds)?b.hospitalIds:[])];
+        const row=catalogSave('hospital_service_types',b.id||null,b.name);const desired=[...new Set(Array.isArray(b.hospitalIds)?b.hospitalIds:[])];if(scopedHospital&&desired.some(id=>id!==user.facility))throw Object.assign(new Error('لا يمكنك ربط نوع الخدمة بمرفق آخر'),{status:403});
         if(desired.some(id=>!getHospital(id)))throw bad('يوجد مستشفى غير صالح في الاختيارات');
         const current=sql.prepare('SELECT hospital_id FROM hospital_service_type_links WHERE service_type_id=?').all(row.id).map(x=>x.hospital_id);
         for(const hid of current)if(!desired.includes(hid)&&sql.prepare('SELECT 1 FROM hospital_department_links WHERE hospital_id=? AND service_type_id=? LIMIT 1').get(hid,row.id))throw conflict('أزل الأقسام التابعة لهذا النوع من المستشفى أولًا');
@@ -149,9 +168,9 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
         if(!getDepartment(b.id))throw bad('القسم الرئيسي غير موجود');if(sql.prepare('SELECT 1 FROM hospital_department_links WHERE department_id=? LIMIT 1').get(b.id))throw conflict('أزل ارتباط القسم من المستشفيات أولًا');if(sql.prepare('SELECT 1 FROM hospital_branch_catalog WHERE department_id=? LIMIT 1').get(b.id))throw conflict('احذف فروع القسم أولًا');sql.prepare('DELETE FROM hospital_department_catalog WHERE id=?').run(b.id);return {saved:true};
       }
       if(b.action==='branch.save'){
-        if(!getDepartment(b.departmentId))throw bad('القسم الرئيسي غير موجود');if(!validName(b.name))throw bad('أدخل اسم فرع صالحًا');const id=b.id||'branch-'+randomUUID();const dupe=sql.prepare('SELECT id FROM hospital_branch_catalog WHERE department_id=? AND norm=? AND id<>?').get(b.departmentId,norm(b.name),id);if(dupe)throw conflict('الفرع موجود تحت هذا القسم');if(b.id&&!getBranch(b.id))throw bad('الفرع غير موجود');if(b.id)sql.prepare('UPDATE hospital_branch_catalog SET name=?,norm=?,input_mode=? WHERE id=?').run(b.name.trim(),norm(b.name),inputModeForBranch(b.name),id);else sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run(id,b.departmentId,b.name.trim(),norm(b.name),inputModeForBranch(b.name));return {saved:true,id};
+        if(!getDepartment(b.departmentId))throw bad('القسم الرئيسي غير موجود');if(!validName(b.name))throw bad('أدخل اسم فرع صالحًا');if(!b.hospitalId||!b.serviceTypeId||!getHospital(b.hospitalId)||!linked(b.hospitalId,b.serviceTypeId,b.departmentId)&&!sql.prepare('SELECT 1 FROM hospital_department_links WHERE hospital_id=? AND service_type_id=? AND department_id=?').get(b.hospitalId,b.serviceTypeId,b.departmentId))throw bad('اختر ارتباطًا صالحًا بالمستشفى ونوع الخدمة');const id=b.id||'branch-'+randomUUID();const dupe=sql.prepare('SELECT b.id FROM hospital_branch_catalog b JOIN hospital_branch_links bl ON bl.branch_id=b.id WHERE b.department_id=? AND b.norm=? AND bl.hospital_id=? AND bl.service_type_id=? AND b.id<>?').get(b.departmentId,norm(b.name),b.hospitalId,b.serviceTypeId,id);if(dupe)throw conflict('الفرع موجود تحت هذا القسم في هذا المستشفى');if(b.id&&!getBranch(b.id))throw bad('الفرع غير موجود');if(scopedHospital&&b.id&&!sql.prepare('SELECT 1 FROM hospital_branch_links WHERE branch_id=? AND hospital_id=? AND service_type_id=?').get(b.id,b.hospitalId,b.serviceTypeId))throw bad('الفرع غير مرتبط بالمرفق المحدد');if(b.id)sql.prepare('UPDATE hospital_branch_catalog SET name=?,norm=?,input_mode=? WHERE id=?').run(b.name.trim(),norm(b.name),inputModeForBranch(b.name),id);else sql.prepare('INSERT INTO hospital_branch_catalog(id,department_id,name,norm,input_mode) VALUES(?,?,?,?,?)').run(id,b.departmentId,b.name.trim(),norm(b.name),inputModeForBranch(b.name));sql.prepare('INSERT OR IGNORE INTO hospital_branch_links(hospital_id,service_type_id,department_id,branch_id) VALUES(?,?,?,?)').run(b.hospitalId,b.serviceTypeId,b.departmentId,id);return {saved:true,id};
       }
-      if(b.action==='branch.delete'){if(!getBranch(b.id))throw bad('الفرع غير موجود');sql.prepare('DELETE FROM hospital_branch_catalog WHERE id=?').run(b.id);return {saved:true}}
+      if(b.action==='branch.delete'){if(!getBranch(b.id))throw bad('الفرع غير موجود');if(b.hospitalId&&b.serviceTypeId){sql.prepare('DELETE FROM hospital_branch_links WHERE branch_id=? AND hospital_id=? AND service_type_id=?').run(b.id,b.hospitalId,b.serviceTypeId)}else sql.prepare('DELETE FROM hospital_branch_catalog WHERE id=?').run(b.id);return {saved:true}}
       throw bad('الإجراء غير معروف');
     }))}catch(e){return out({error:e.message||'تعذر حفظ البيانات'},e.status||400)}
   }
@@ -166,7 +185,7 @@ export function hospitalActivityService(sql,out){
   const fieldsFor=(hospitalId,typeId)=>{
     const departments=sql.prepare('SELECT d.id,d.name,d.description,l.age_gender_breakdown FROM hospital_department_links l JOIN hospital_department_catalog d ON d.id=l.department_id WHERE l.hospital_id=? AND l.service_type_id=? ORDER BY l.sort_order,d.name').all(hospitalId,typeId);
     return departments.map(department=>{
-      const allBranches=sql.prepare('SELECT id,name,input_mode FROM hospital_branch_catalog WHERE department_id=? ORDER BY name').all(department.id);
+      const allBranches=sql.prepare('SELECT b.id,b.name,b.input_mode FROM hospital_branch_catalog b JOIN hospital_branch_links bl ON bl.branch_id=b.id AND bl.hospital_id=? AND bl.service_type_id=? AND bl.department_id=? WHERE b.department_id=? ORDER BY b.name').all(hospitalId,typeId,department.id,department.id);
       return {...department,fields:(allBranches.length?allBranches.map(branch=>({key:'b:'+branch.id,branchId:branch.id,label:branch.name,inputMode:branch.input_mode||inputModeForBranch(branch.name)})): [{key:'d:'+department.id,branchId:null,label:'عدد الحالات',inputMode:'age_gender'}])};
     });
   };
@@ -175,7 +194,8 @@ export function hospitalActivityService(sql,out){
     if(req.method==='GET'){
       const url=new URL(req.url),hospital=url.searchParams.get('hospital'),from=url.searchParams.get('from'),to=url.searchParams.get('to');
       const where=[],params=[];
-      if(hospital){where.push('r.hospital_id=?');params.push(hospital)}
+      if(user?.role!=='admin'&&user?.scope==='hospital'){where.push('r.hospital_id=?');params.push(user.facility)}
+      if(hospital){if(user?.role!=='admin'&&user?.scope==='hospital'&&hospital!==user.facility)return out({error:'السجلات خارج المنشأة المخصصة لك'},403);where.push('r.hospital_id=?');params.push(hospital)}
       if(from){where.push('r.date>=?');params.push(from)}
       if(to){where.push('r.date<=?');params.push(to)}
       const rows=sql.prepare('SELECT r.*,h.name AS hospital_name,t.name AS service_type_name FROM hospital_activity_records r JOIN hospitals h ON h.id=r.hospital_id JOIN hospital_service_types t ON t.id=r.service_type_id'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY r.date DESC,h.name,t.name').all(...params);
