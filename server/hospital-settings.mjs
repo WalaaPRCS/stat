@@ -76,7 +76,7 @@ export function hospitalSettingsService(sql,out,canManageSettings=()=>false){
     return {id:hospitalId};
   };
   async function handle(req,user){
-    const scopedHospital=user?.role!=='admin'&&user?.scope==='hospital';if((req.method!=='GET'&&user?.role!=='admin'&&!canManageSettings(user))||(req.method==='GET'&&user?.role!=='admin'&&!(user?.role==='entry'&&user.scope==='hospital')))return out({error:req.method==='GET'?'إعدادات المستشفيات متاحة للمرفق المخصص فقط':'تحتاج هذه العملية إلى صلاحية تعديل إعدادات الأقسام'},403);
+    const scopedHospital=user?.role!=='admin'&&user?.scope==='hospital';if((req.method!=='GET'&&user?.role!=='admin'&&!canManageSettings(user))||(req.method==='GET'&&user?.role!=='admin'&&!(['entry','custom'].includes(user?.role)&&user.scope==='hospital')))return out({error:req.method==='GET'?'إعدادات المستشفيات متاحة للمرفق المخصص فقط':'تحتاج هذه العملية إلى صلاحية تعديل إعدادات الأقسام'},403);
     if(req.method==='GET'){
       const scoped=user?.role!=='admin'&&user?.scope==='hospital',hospitalId=scoped?user.facility:null;
       const hospitals=sql.prepare('SELECT id,name,region,location,status,start FROM hospitals ORDER BY name').all().filter(h=>!hospitalId||h.id===hospitalId);
